@@ -6,7 +6,7 @@ Paste a URL. Find out which AI crawlers and agents can actually read it — and 
 
 No accounts. No tracking. No LLM at runtime — every check is a real HTTP probe.
 
-Built solo for [Hackyard Yard #1](https://hackyard.dev) ("No accounts", 48h).
+Built solo for [Hackyard Yard #1](https://hackyard.tech/) ("No accounts", 48h).
 
 ## What it checks
 
