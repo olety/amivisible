@@ -8,7 +8,9 @@
     "types": "wrangler types"
   },
   "dependencies": {
-    "hono": "^4.9.0"
+    "@mozilla/readability": "^0.6.0",
+    "hono": "^4.9.0",
+    "linkedom": "^0.18.13"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260829.1",

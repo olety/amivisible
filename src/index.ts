@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { runCheck } from "./report";
+import { markdownView } from "./markdown";
 
 const app = new Hono();
 
@@ -52,6 +53,19 @@ app.get("/api/check", async (c) => {
     return c.body(body, 200, { "content-type": "application/json", "x-amivisible-cache": "miss" });
   } catch (e) {
     return c.json({ error: "check failed", detail: e instanceof Error ? e.message : String(e) }, 502);
+  }
+});
+
+app.get("/api/markdown", async (c) => {
+  const raw = c.req.query("url");
+  if (!raw) return c.json({ error: "missing ?url=" }, 400);
+  const target = validateTarget(raw);
+  if ("error" in target) return c.json({ error: target.error }, 400);
+  try {
+    const view = await markdownView(target.url.href);
+    return c.json(view);
+  } catch (e) {
+    return c.json({ error: "markdown view failed", detail: e instanceof Error ? e.message : String(e) }, 502);
   }
 });
 
