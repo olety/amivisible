@@ -4,9 +4,113 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>amivisible — can AI see your site?</title>
+<meta name="description" content="Check whether AI crawlers — ChatGPT, Claude, Perplexity and friends — can actually read your website. Real HTTP probes, no accounts, no AI tokens. Fix kit included.">
+<link rel="canonical" href="https://amivisible.dev/">
+<meta property="og:title" content="amivisible — can AI see your site?">
+<meta property="og:description" content="Real probes, real verdicts. See which AI crawlers can read your site, and get the fix kit.">
+<meta property="og:image" content="https://amivisible.dev/assets/og.jpg">
+<meta property="og:url" content="https://amivisible.dev/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<h1>amivisible</h1>
-<p>Can AI see your site? Checker landing here shortly.</p>
+
+<div class="postcard">
+  <header class="topbar">
+    <a class="wordmark" href="/">amivisible</a>
+    <nav>
+      <a href="#agents">for agents</a>
+      <a href="#api">api</a>
+      <a href="https://github.com/olety/amivisible" target="_blank" rel="noopener">github</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1 class="riso-title">can AI see<br>your site?</h1>
+    <p class="tagline">Real HTTP probes against your pages, as 17 AI crawlers.<br>No accounts. No AI tokens. Just the truth, in seconds.</p>
+    <form id="scan-form" autocomplete="off">
+      <input id="url-input" type="text" inputmode="url" spellcheck="false"
+             placeholder="yoursite.com" aria-label="Website URL">
+      <button id="scan-btn" type="submit">scan <span class="arrow">→</span></button>
+    </form>
+    <p class="hero-note">robots.txt <em>and</em> edge behavior · JS-blindness · llms.txt · fix kit included</p>
+  </section>
+</div>
+
+<main id="results" class="paper-card" hidden>
+  <div id="probe-log" class="probe-log" aria-live="polite"></div>
+  <div id="report" hidden>
+    <div class="verdict">
+      <div class="verdict-num"><span id="v-visible">–</span><span class="verdict-slash">/</span><span id="v-total">–</span></div>
+      <p id="v-text" class="verdict-text"></p>
+      <p class="verdict-sub">checked <span id="v-url" class="mono"></span></p>
+    </div>
+
+    <section class="block">
+      <h2>crawler by crawler</h2>
+      <div id="crawler-groups"></div>
+    </section>
+
+    <section class="block">
+      <h2>findings</h2>
+      <div id="findings"></div>
+    </section>
+
+    <section class="block">
+      <h2>signals</h2>
+      <div id="signals" class="signals"></div>
+    </section>
+
+    <div class="actions">
+      <button id="fixkit-btn" class="btn-secondary">get the fix kit</button>
+      <button id="fresh-btn" class="btn-secondary">re-check (fresh)</button>
+      <a id="md-link" class="btn-secondary" target="_blank" rel="noopener">view as markdown</a>
+    </div>
+    <div id="fixkit" hidden></div>
+
+    <details class="methodology">
+      <summary>how this was measured</summary>
+      <ul id="methodology-list"></ul>
+    </details>
+  </div>
+  <div id="check-error" class="check-error" hidden></div>
+</main>
+
+<section id="agents" class="paper-card agent-block">
+  <h2>bring your own agent</h2>
+  <p>Paste this into Claude Code, Codex, opencode — any agent that can fetch a URL. It checks your site and applies the fixes for you.</p>
+  <div class="prompt-box">
+    <pre id="agent-prompt">Check the AI visibility of MYSITE.com and fix what you find:
+
+1. GET https://amivisible.dev/api/check?url=https://MYSITE.com
+   Tell me which AI crawlers can read my site and which can't, and why.
+2. GET https://amivisible.dev/api/fixkit?url=https://MYSITE.com
+   It returns a recommended robots.txt, an llms.txt draft, and IndexNow steps.
+3. Apply the fixes that make sense in my repo, and show me the diff.</pre>
+    <button id="copy-prompt" class="btn-secondary">copy prompt</button>
+  </div>
+</section>
+
+<section id="api" class="paper-card api-block">
+  <h2>api</h2>
+  <p>Free, no keys. Same engine as the button above.</p>
+  <table class="api-table">
+    <tr><td class="mono">GET /api/check?url=…</td><td>full visibility report (add <span class="mono">&amp;fresh=1</span> to skip cache)</td></tr>
+    <tr><td class="mono">GET /api/markdown?url=…</td><td>your page the way an AI reader ends up seeing it</td></tr>
+    <tr><td class="mono">GET /api/fixkit?url=…</td><td>recommended robots.txt + llms.txt draft + IndexNow kit</td></tr>
+    <tr><td class="mono">POST /mcp</td><td>MCP server (streamable HTTP) — <span class="mono">check_site · get_markdown · get_fix_kit</span></td></tr>
+  </table>
+</section>
+
+<footer>
+  <p>Every verdict carries its evidence tier — <strong>PROVEN</strong> / <strong>LIKELY</strong> / <strong>SPECULATIVE</strong> — and speculation is never scored.</p>
+  <p>Built for <a href="https://github.com/olety/amivisible" target="_blank" rel="noopener">Hackyard #1</a> · theme: no accounts · <span class="mono">amivisible.dev</span></p>
+</footer>
+
+<script src="/app.js"></script>
 </body>
 </html>
