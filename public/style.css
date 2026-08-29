@@ -40,6 +40,14 @@ body::after {
 
 .mono { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; }
 
+/* ?font=comfortaa preview switch */
+html.font-comfortaa body,
+html.font-comfortaa #url-input,
+html.font-comfortaa #scan-btn,
+html.font-comfortaa .btn-secondary {
+  font-family: "Comfortaa", system-ui, sans-serif;
+}
+
 a { color: var(--violet); }
 
 /* ---------- postcard hero (layered: bg plate / robot / floating window) ---------- */

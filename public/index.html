@@ -14,8 +14,9 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;700;800&family=Comfortaa:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
+<script>if(new URLSearchParams(location.search).get("font")==="comfortaa")document.documentElement.classList.add("font-comfortaa");</script>
 </head>
 <body>
 
@@ -43,7 +44,11 @@
       </div>
       <p class="hero-note">robots.txt <em>and</em> edge behavior · JS-blindness · llms.txt · fix kit</p>
     </form>
-    <img class="hero-robot" src="/assets/robot.webp" alt="" aria-hidden="true">
+    <video class="hero-robot" poster="/assets/robot.webp"
+           autoplay muted loop playsinline disablepictureinpicture aria-hidden="true">
+      <source src="/assets/robot-idle.mov" type='video/quicktime; codecs="hvc1"'>
+      <source src="/assets/robot-idle.webm" type='video/webm; codecs="vp9"'>
+    </video>
   </section>
 </div>
 

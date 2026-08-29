@@ -317,6 +317,12 @@ $("copy-prompt").addEventListener("click", async () => {
   setTimeout(() => { $("copy-prompt").textContent = "copy prompt"; }, 1600);
 });
 
+// reduced motion: freeze the robot on his poster frame
+if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const rv = document.querySelector("video.hero-robot");
+  if (rv) { rv.removeAttribute("autoplay"); rv.pause(); rv.load(); }
+}
+
 // shareable links: /?url=… auto-runs
 const initial = new URLSearchParams(location.search).get("url");
 if (initial) {
