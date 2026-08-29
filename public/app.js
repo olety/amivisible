@@ -24,8 +24,17 @@ const PROBE_STEPS = [
   "comparing robots.txt verdicts against edge behavior",
 ];
 
+// probed crawlers, in server order — one stamped cell each
+const PROBE_CELLS = [
+  "OAI-SearchBot", "ChatGPT-User", "GPTBot", "Claude-SearchBot", "Claude-User", "ClaudeBot",
+  "PerplexityBot", "Perplexity-User", "Googlebot", "bingbot", "DuckAssistBot", "YouBot",
+  "MistralAI-User", "CCBot", "Bytespider", "meta-externalagent", "Amazonbot",
+];
+
 let currentUrl = null;
 let probeTimer = null;
+let cellTimer = null;
+let scanInFlight = false;
 
 function normalizeUrl(raw) {
   let s = raw.trim();
@@ -37,6 +46,17 @@ function normalizeUrl(raw) {
 function startProbeLog() {
   const log = $("probe-log");
   log.innerHTML = "";
+  const cellRow = document.createElement("div");
+  cellRow.className = "probe-cells";
+  const cells = PROBE_CELLS.map((name) => {
+    const c = document.createElement("span");
+    c.className = "cell";
+    c.textContent = name;
+    cellRow.appendChild(c);
+    return c;
+  });
+  log.appendChild(cellRow);
+
   const steps = PROBE_STEPS.map((text) => {
     const div = document.createElement("div");
     div.className = "step";
@@ -52,40 +72,69 @@ function startProbeLog() {
     i += 1;
     steps[i].classList.add("active");
   }, 1100);
-  return steps;
+  let ci = 0;
+  cellTimer = setInterval(() => {
+    if (ci >= cells.length - 1) return; // last cell lights when the response lands
+    cells[ci].classList.add("lit");
+    ci += 1;
+  }, 620);
+  return { steps, cells };
 }
 
-function finishProbeLog(steps) {
+function finishProbeLog(probe) {
   clearInterval(probeTimer);
-  steps.forEach((s) => { s.classList.remove("active"); s.classList.add("done"); });
+  clearInterval(cellTimer);
+  probe.steps.forEach((s) => { s.classList.remove("active"); s.classList.add("done"); });
+  probe.cells.forEach((c) => c.classList.add("lit"));
 }
 
 async function runScan(url, fresh = false) {
+  if (scanInFlight) return;
+  scanInFlight = true;
   currentUrl = url;
-  $("scan-btn").disabled = true;
-  $("results").hidden = false;
+  $("scan-btn").setAttribute("aria-disabled", "true");
   $("report").hidden = true;
   $("check-error").hidden = true;
   $("fixkit").hidden = true;
   $("fixkit").innerHTML = "";
-  $("results").scrollIntoView({ behavior: "smooth", block: "start" });
 
-  const steps = startProbeLog();
+  // don't flash the probe UI on cache-fast responses; once shown, hold it briefly
+  let probe = null;
+  let shownAt = 0;
+  const showTimer = setTimeout(() => {
+    $("results").hidden = false;
+    probe = startProbeLog();
+    shownAt = performance.now();
+    $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 120);
+
   try {
     const q = `url=${encodeURIComponent(url)}${fresh ? "&fresh=1" : ""}`;
     const res = await fetch(`/api/check?${q}`);
     const data = await res.json();
-    finishProbeLog(steps);
+    clearTimeout(showTimer);
+    if (probe) {
+      finishProbeLog(probe);
+      const held = performance.now() - shownAt;
+      if (held < 600) await new Promise((r) => setTimeout(r, 600 - held));
+    } else {
+      $("results").hidden = false;
+      $("probe-log").innerHTML = "";
+      $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     if (!res.ok || data.error) {
       showError(data.detail || data.error || `check failed (${res.status})`);
     } else {
       render(data);
     }
   } catch (err) {
-    finishProbeLog(steps);
+    clearTimeout(showTimer);
+    if (probe) finishProbeLog(probe);
+    $("results").hidden = false;
     showError(`network error — ${err.message}`);
   } finally {
-    $("scan-btn").disabled = false;
+    scanInFlight = false;
+    $("scan-btn").removeAttribute("aria-disabled");
   }
 }
 
