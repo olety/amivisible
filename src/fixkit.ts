@@ -25,12 +25,9 @@ export interface FixKit {
 
 export async function buildFixKit(rawUrl: string): Promise<FixKit> {
   const url = new URL(rawUrl);
-  const origin = url.origin;
-
-  const [robotsRes, pageRes] = await Promise.all([
-    probeAs(`${origin}/robots.txt`, CONTROL_UA),
-    probeAs(url.href, CONTROL_UA),
-  ]);
+  const pageRes = await probeAs(url.href, CONTROL_UA);
+  const origin = new URL(pageRes.finalUrl || url.href).origin;
+  const robotsRes = await probeAs(`${origin}/robots.txt`, CONTROL_UA);
   const hasRobots = robotsRes.ok && !!robotsRes.body && !/<html[\s>]/i.test(robotsRes.body.slice(0, 200));
   const robots = hasRobots ? parseRobots(robotsRes.body) : { groups: [], sitemaps: [], mentionedAgents: [] };
   const mentioned = robots.mentionedAgents.map((a) => a.toLowerCase());

@@ -18,6 +18,20 @@ export interface HtmlAnalysis {
   metaRobots: string | null;
   noaiTags: string[];
   hasSitemapHint: boolean;
+  /** answer-first structure signals (deterministic proxies for the GEO-study levers) */
+  structure: {
+    h1Count: number;
+    h2Count: number;
+    headingOrder: string[];
+    firstParaWords: number;
+    statsInOpening: boolean;
+  };
+  /** machine-readable date signals */
+  freshness: {
+    jsonLdDates: boolean;
+    metaDates: boolean;
+    timeTags: boolean;
+  };
 }
 
 const MARKER_PATTERNS: [string, RegExp][] = [
@@ -74,6 +88,21 @@ export function analyzeHtml(html: string): HtmlAnalysis {
   // Binary per the Vercel/MERJ studies: shell markup with no real text = invisible to non-rendering bots
   const csrShell = (emptyRootDiv && visible.length < 300) || (visible.length < 150 && bytes > 2000);
 
+  const headingOrder: string[] = [];
+  for (const m of bodyMatch.matchAll(/<h([1-6])[^>]*>/gi)) headingOrder.push(`h${m[1]}`);
+  const h1Count = headingOrder.filter((h) => h === "h1").length;
+  const h2Count = headingOrder.filter((h) => h === "h2").length;
+  let firstParaWords = 0;
+  for (const m of bodyMatch.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)) {
+    const words = m[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+    if (words.length >= 15) { firstParaWords = words.length; break; }
+  }
+  const statsInOpening = /\d/.test(visible.slice(0, 1500));
+
+  const jsonLdDates = /"(datePublished|dateModified)"\s*:/.test(html);
+  const metaDates = /<meta[^>]+(article:published_time|article:modified_time|date)[^>]*>/i.test(html);
+  const timeTags = /<time[^>]+datetime=/i.test(html);
+
   return {
     bytes, title, h1,
     visibleTextChars: visible.length,
@@ -83,6 +112,8 @@ export function analyzeHtml(html: string): HtmlAnalysis {
     jsonLdTypes: [...new Set(jsonLdTypes)],
     canonical, metaRobots, noaiTags,
     hasSitemapHint: false,
+    structure: { h1Count, h2Count, headingOrder, firstParaWords, statsInOpening },
+    freshness: { jsonLdDates, metaDates, timeTags },
   };
 }
 

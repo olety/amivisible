@@ -9,6 +9,8 @@ export interface ProbeResult {
   cfMitigated: string | null;
   /** body carries a Cloudflare challenge/block page signature */
   cfChallengePage: boolean;
+  /** URL after following redirects (empty on error) */
+  finalUrl: string;
   payPerCrawl: boolean;
   bytes: number;
   error?: string;
@@ -42,6 +44,7 @@ export async function probeAs(url: string, ua: string, accept?: string): Promise
       contentType: res.headers.get("content-type"),
       cfMitigated: res.headers.get("cf-mitigated"),
       cfChallengePage,
+      finalUrl: res.url,
       payPerCrawl: res.status === 402 || res.headers.has("crawl-price") || res.headers.has("pay-per-crawl"),
       bytes: buf.byteLength,
       body,
@@ -49,7 +52,7 @@ export async function probeAs(url: string, ua: string, accept?: string): Promise
       ...( { headers: res.headers } as object ),
     } as ProbeResult & { body: string; headers: Headers };
   } catch (e) {
-    return { ua, status: 0, ok: false, contentType: null, cfMitigated: null, cfChallengePage: false, payPerCrawl: false, bytes: 0, body: "", error: e instanceof Error ? e.message : String(e) };
+    return { ua, status: 0, ok: false, contentType: null, cfMitigated: null, cfChallengePage: false, finalUrl: "", payPerCrawl: false, bytes: 0, body: "", error: e instanceof Error ? e.message : String(e) };
   }
 }
 

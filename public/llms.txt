@@ -7,7 +7,7 @@ anyway because it costs nothing — but our own report labels it SPECULATIVE.
 
 ## API
 
-- [GET /api/check?url=](https://amivisible.olkyrylchuk.workers.dev/api/check) — full visibility report (JSON, versioned)
-- [GET /api/markdown?url=](https://amivisible.olkyrylchuk.workers.dev/api/markdown) — the page through an agent's eyes
-- [GET /api/fixkit?url=](https://amivisible.olkyrylchuk.workers.dev/api/fixkit) — corrected robots.txt, llms.txt draft, IndexNow steps
-- [POST /mcp](https://amivisible.olkyrylchuk.workers.dev/mcp) — MCP server (streamable HTTP, no auth): check_site, get_markdown, get_fix_kit
+- [GET /api/check?url=](https://amivisible.dev/api/check) — full visibility report (JSON, versioned)
+- [GET /api/markdown?url=](https://amivisible.dev/api/markdown) — the page through an agent's eyes
+- [GET /api/fixkit?url=](https://amivisible.dev/api/fixkit) — corrected robots.txt, llms.txt draft, IndexNow steps
+- [POST /mcp](https://amivisible.dev/mcp) — MCP server (streamable HTTP, no auth): check_site, get_markdown, get_fix_kit
