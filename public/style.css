@@ -206,6 +206,16 @@ a { color: var(--violet); }
 }
 .hero-note em { color: var(--orange-deep); font-style: normal; }
 
+/* ---------- the meadow below the fold ---------- */
+
+.meadow {
+  background: #283776 url("/assets/meadow.webp") top center / 100% auto no-repeat;
+  padding-bottom: 10px;
+}
+.meadow footer { color: #b9b3e0; }
+.meadow footer a, .meadow footer strong { color: var(--paper); }
+.meadow .paper-card { box-shadow: 7px 8px 0 rgba(20, 22, 52, 0.5); }
+
 /* ---------- paper cards ---------- */
 
 .paper-card {
