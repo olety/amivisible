@@ -27,6 +27,9 @@ function validateTarget(raw: string): { url: URL } | { error: string } {
     /^169\.254\./.test(host) || host === "[::1]" || host.startsWith("[fc") || host.startsWith("[fd") || host.startsWith("[fe80")
   ) return { error: "private/internal hosts not allowed" };
   if (!host.includes(".")) return { error: "need a public hostname" };
+  if (host === "amivisible.olkyrylchuk.workers.dev" || host === "amivisible.dev" || host === "www.amivisible.dev") {
+    return { error: "amivisible can't probe itself — Cloudflare blocks a Worker from fetching its own hostname. Check us from your terminal: curl -A GPTBot https://amivisible.dev" };
+  }
   return { url };
 }
 

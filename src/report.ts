@@ -63,6 +63,11 @@ export async function runCheck(rawUrl: string): Promise<CheckReport> {
     ...PROBE_CRAWLERS.map((c) => probeAs(url.href, c.ua!)),
   ]);
 
+  // Fail loudly rather than report a green board off dead probes
+  if (control.status === 0) {
+    throw new Error(`could not reach ${url.href} from our probes (${control.error ?? "no response"})`);
+  }
+
   const robotsTxtFound = robotsRes.ok && !!robotsRes.body && !/<html[\s>]/i.test(robotsRes.body.slice(0, 200));
   const robots: ParsedRobots = robotsTxtFound ? parseRobots(robotsRes.body) : { groups: [], sitemaps: [], mentionedAgents: [] };
   const html = control.ok && control.body ? analyzeHtml(control.body) : null;
