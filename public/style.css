@@ -19,7 +19,9 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  background: var(--paper);
+  /* one continuous painting for the whole page: sunset hero → dusk glow → firefly
+     meadow; below the bitmap the meadow's own violet carries on as flat color */
+  background: #283776 url("/assets/scene.webp") top center / 100% auto no-repeat;
   color: var(--violet-deep);
   font-family: "Baloo 2", system-ui, sans-serif;
   font-size: 17px;
@@ -48,6 +50,18 @@ html.font-comfortaa .btn-secondary {
   font-family: "Comfortaa", system-ui, sans-serif;
 }
 
+/* ?font=mix — Baloo titles, Comfortaa body */
+html.font-mix body,
+html.font-mix #url-input {
+  font-family: "Comfortaa", system-ui, sans-serif;
+}
+html.font-mix .riso-title,
+html.font-mix h2,
+html.font-mix .wordmark,
+html.font-mix .verdict-num {
+  font-family: "Baloo 2", system-ui, sans-serif;
+}
+
 a { color: var(--violet); }
 
 /* ---------- postcard hero (layered: bg plate / robot / floating window) ---------- */
@@ -55,8 +69,6 @@ a { color: var(--violet); }
 .postcard {
   position: relative;
   min-height: 92vh;
-  /* bottom-anchored so the hill row never re-crops as the viewport changes */
-  background: url("/assets/bg-empty.webp") center bottom / cover no-repeat;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -216,28 +228,12 @@ a { color: var(--violet); }
 .hero-note em { color: var(--orange-deep); font-style: normal; }
 
 /* ---------- the meadow below the fold ----------
-   collage join, not a dissolve: the meadow starts on dense grass (cream cropped
-   from the asset), overlaps the hero hill, and its top edge is torn paper */
+   transparent: the body's single scene bitmap carries the visuals */
 
 .meadow {
   position: relative;
-  z-index: 1;
-  margin-top: -92px;
-  background: #283776 url("/assets/meadow.webp") top center / 100% auto no-repeat;
+  padding-top: 20px;
   padding-bottom: 10px;
-  padding-top: 40px;
-  -webkit-mask-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='64'%3E%3Cpath d='M0,64 L0,38 L14,22 L31,34 L52,12 L70,30 L88,18 L109,33 L127,15 L149,28 L166,10 L188,26 L207,16 L228,32 L246,14 L266,29 L285,11 L305,27 L324,17 L345,31 L363,13 L381,25 L400,34 L400,64 Z' fill='%23fff'/%3E%3C/svg%3E"),
-    linear-gradient(#000, #000);
-  -webkit-mask-size: 400px 64px, 100% calc(100% - 63px);
-  -webkit-mask-position: top, bottom;
-  -webkit-mask-repeat: repeat-x, no-repeat;
-  mask-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='64'%3E%3Cpath d='M0,64 L0,38 L14,22 L31,34 L52,12 L70,30 L88,18 L109,33 L127,15 L149,28 L166,10 L188,26 L207,16 L228,32 L246,14 L266,29 L285,11 L305,27 L324,17 L345,31 L363,13 L381,25 L400,34 L400,64 Z' fill='%23fff'/%3E%3C/svg%3E"),
-    linear-gradient(#000, #000);
-  mask-size: 400px 64px, 100% calc(100% - 63px);
-  mask-position: top, bottom;
-  mask-repeat: repeat-x, no-repeat;
 }
 .meadow footer { color: #b9b3e0; }
 .meadow footer a, .meadow footer strong { color: var(--paper); }
@@ -472,7 +468,8 @@ footer {
 footer a { color: var(--violet); }
 
 @media (max-width: 760px) {
-  .postcard { background-position: 30% bottom; min-height: 96vh; }
+  body { background-size: 235% auto; background-position: 50% top; }
+  .postcard { min-height: 96vh; }
   .topbar { padding: 14px 18px; }
   .topbar nav a { margin-left: 12px; font-size: 14px; }
   .hero-copy { position: static; max-width: none; padding: 3vh 22px 0; text-align: center; }
