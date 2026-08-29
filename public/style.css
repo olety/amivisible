@@ -55,7 +55,8 @@ a { color: var(--violet); }
 .postcard {
   position: relative;
   min-height: 92vh;
-  background: url("/assets/bg-empty.webp") center 40% / cover no-repeat;
+  /* bottom-anchored so the hill row never re-crops as the viewport changes */
+  background: url("/assets/bg-empty.webp") center bottom / cover no-repeat;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -214,11 +215,29 @@ a { color: var(--violet); }
 }
 .hero-note em { color: var(--orange-deep); font-style: normal; }
 
-/* ---------- the meadow below the fold ---------- */
+/* ---------- the meadow below the fold ----------
+   collage join, not a dissolve: the meadow starts on dense grass (cream cropped
+   from the asset), overlaps the hero hill, and its top edge is torn paper */
 
 .meadow {
+  position: relative;
+  z-index: 1;
+  margin-top: -92px;
   background: #283776 url("/assets/meadow.webp") top center / 100% auto no-repeat;
   padding-bottom: 10px;
+  padding-top: 40px;
+  -webkit-mask-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='64'%3E%3Cpath d='M0,64 L0,38 L14,22 L31,34 L52,12 L70,30 L88,18 L109,33 L127,15 L149,28 L166,10 L188,26 L207,16 L228,32 L246,14 L266,29 L285,11 L305,27 L324,17 L345,31 L363,13 L381,25 L400,34 L400,64 Z' fill='%23fff'/%3E%3C/svg%3E"),
+    linear-gradient(#000, #000);
+  -webkit-mask-size: 400px 64px, 100% calc(100% - 63px);
+  -webkit-mask-position: top, bottom;
+  -webkit-mask-repeat: repeat-x, no-repeat;
+  mask-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='64'%3E%3Cpath d='M0,64 L0,38 L14,22 L31,34 L52,12 L70,30 L88,18 L109,33 L127,15 L149,28 L166,10 L188,26 L207,16 L228,32 L246,14 L266,29 L285,11 L305,27 L324,17 L345,31 L363,13 L381,25 L400,34 L400,64 Z' fill='%23fff'/%3E%3C/svg%3E"),
+    linear-gradient(#000, #000);
+  mask-size: 400px 64px, 100% calc(100% - 63px);
+  mask-position: top, bottom;
+  mask-repeat: repeat-x, no-repeat;
 }
 .meadow footer { color: #b9b3e0; }
 .meadow footer a, .meadow footer strong { color: var(--paper); }
@@ -236,7 +255,7 @@ a { color: var(--violet); }
   padding: 28px 32px;
 }
 
-#results { margin-top: -60px; position: relative; z-index: 2; }
+#results { margin-top: 0; position: relative; z-index: 2; }
 
 h2 {
   font-size: 22px;
@@ -453,7 +472,7 @@ footer {
 footer a { color: var(--violet); }
 
 @media (max-width: 760px) {
-  .postcard { background-position: 30% 65%; min-height: 96vh; }
+  .postcard { background-position: 30% bottom; min-height: 96vh; }
   .topbar { padding: 14px 18px; }
   .topbar nav a { margin-left: 12px; font-size: 14px; }
   .hero-copy { position: static; max-width: none; padding: 3vh 22px 0; text-align: center; }
@@ -462,7 +481,7 @@ footer a { color: var(--violet); }
   .hero-robot { width: clamp(200px, 52vw, 300px); left: -4%; bottom: -2%; }
   .hero { padding-bottom: 44vw; } /* room for the robot below the window */
   .paper-card { padding: 20px 18px; }
-  #results { margin-top: -30px; }
+
 }
 
 #scan-btn[aria-disabled="true"] { opacity: 0.7; cursor: wait; }
