@@ -7,6 +7,8 @@ export interface ProbeResult {
   ok: boolean;
   contentType: string | null;
   cfMitigated: string | null;
+  /** body carries a Cloudflare challenge/block page signature */
+  cfChallengePage: boolean;
   payPerCrawl: boolean;
   bytes: number;
   error?: string;
@@ -31,12 +33,15 @@ export async function probeAs(url: string, ua: string, accept?: string): Promise
     });
     const buf = await res.arrayBuffer();
     const body = new TextDecoder("utf-8").decode(buf.slice(0, MAX_BODY));
+    const cfChallengePage = res.status >= 400 &&
+      (/challenges\.cloudflare\.com|cf-chl|Attention Required!|<title>Just a moment/i.test(body.slice(0, 4000)));
     return {
       ua,
       status: res.status,
       ok: res.ok,
       contentType: res.headers.get("content-type"),
       cfMitigated: res.headers.get("cf-mitigated"),
+      cfChallengePage,
       payPerCrawl: res.status === 402 || res.headers.has("crawl-price") || res.headers.has("pay-per-crawl"),
       bytes: buf.byteLength,
       body,
@@ -44,7 +49,7 @@ export async function probeAs(url: string, ua: string, accept?: string): Promise
       ...( { headers: res.headers } as object ),
     } as ProbeResult & { body: string; headers: Headers };
   } catch (e) {
-    return { ua, status: 0, ok: false, contentType: null, cfMitigated: null, payPerCrawl: false, bytes: 0, body: "", error: e instanceof Error ? e.message : String(e) };
+    return { ua, status: 0, ok: false, contentType: null, cfMitigated: null, cfChallengePage: false, payPerCrawl: false, bytes: 0, body: "", error: e instanceof Error ? e.message : String(e) };
   }
 }
 

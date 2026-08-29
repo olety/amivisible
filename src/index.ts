@@ -1,10 +1,13 @@
 import { Hono } from "hono";
 import { runCheck } from "./report";
 import { markdownView } from "./markdown";
+import { buildFixKit } from "./fixkit";
+import { handleMcp } from "./mcp";
 
 const app = new Hono();
 
 app.get("/api/health", (c) => c.json({ ok: true, service: "amivisible" }));
+
 
 // SSRF guard: public http(s) hosts only
 function validateTarget(raw: string): { url: URL } | { error: string } {
@@ -68,5 +71,32 @@ app.get("/api/markdown", async (c) => {
     return c.json({ error: "markdown view failed", detail: e instanceof Error ? e.message : String(e) }, 502);
   }
 });
+
+app.get("/api/fixkit", async (c) => {
+  const raw = c.req.query("url");
+  if (!raw) return c.json({ error: "missing ?url=" }, 400);
+  const target = validateTarget(raw);
+  if ("error" in target) return c.json({ error: target.error }, 400);
+  try {
+    return c.json(await buildFixKit(target.url.href));
+  } catch (e) {
+    return c.json({ error: "fix kit failed", detail: e instanceof Error ? e.message : String(e) }, 502);
+  }
+});
+
+// MCP: stateless streamable HTTP, no auth (no accounts, remember?)
+app.post("/mcp", async (c) => {
+  let body: unknown;
+  try { body = await c.req.json(); } catch { return c.json({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "parse error" } }, 400); }
+  const requests = Array.isArray(body) ? body : [body];
+  const responses = [];
+  for (const r of requests) {
+    const res = await handleMcp(r as never, validateTarget);
+    if (res !== null) responses.push(res);
+  }
+  if (responses.length === 0) return c.body(null, 202);
+  return c.json(Array.isArray(body) ? responses : responses[0]);
+});
+app.get("/mcp", (c) => c.json({ error: "POST JSON-RPC here; this server is stateless (no SSE stream)" }, 405));
 
 export default app;

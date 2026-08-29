@@ -16,6 +16,25 @@ Built solo for [Hackyard Yard #1](https://hackyard.dev) ("No accounts", 48h).
 - Generates a fix kit: corrected robots.txt, llms.txt, and honest labels on every recommendation (proven vs speculative).
 - Usable by agents: JSON API + MCP server, so your agent can re-check your site after every deploy.
 
+## API (no accounts, no keys)
+
+```sh
+curl "https://amivisible.olkyrylchuk.workers.dev/api/check?url=yoursite.com"
+curl "https://amivisible.olkyrylchuk.workers.dev/api/markdown?url=yoursite.com"
+curl "https://amivisible.olkyrylchuk.workers.dev/api/fixkit?url=yoursite.com"
+```
+
+Reports are versioned JSON — diff two runs to see what a deploy changed.
+Append `&fresh=1` to bypass the 1-hour cache after you ship a fix.
+
+## MCP — let your agent re-check your site after every deploy
+
+```sh
+claude mcp add --transport http amivisible https://amivisible.olkyrylchuk.workers.dev/mcp
+```
+
+Tools: `check_site`, `get_markdown`, `get_fix_kit`. Stateless, no auth.
+
 ## Develop
 
 ```sh

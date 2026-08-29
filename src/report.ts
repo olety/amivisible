@@ -95,9 +95,11 @@ export async function runCheck(rawUrl: string): Promise<CheckReport> {
     };
   });
 
+  const cfBlocking = probes.some((p) => p.cfMitigated !== null || p.cfChallengePage);
   const findings = buildFindings(robots, robotsTxtFound, html, crawlers, platform, {
     llmsPresent: llmsRes.ok && llmsRes.bytes > 0 && !/<html[\s>]/i.test(llmsRes.body.slice(0, 200)),
     mdSupported: (mdRes.contentType ?? "").includes("text/markdown"),
+    cfBlocking,
   });
 
   // Headline = citation-path crawlers only (tiers: citation + index + secondary)
@@ -130,7 +132,7 @@ function buildFindings(
   html: HtmlAnalysis | null,
   crawlers: CrawlerReport[],
   platform: PlatformFingerprint,
-  extras: { llmsPresent: boolean; mdSupported: boolean },
+  extras: { llmsPresent: boolean; mdSupported: boolean; cfBlocking: boolean },
 ): Finding[] {
   const f: Finding[] = [];
   const mentioned = robots.mentionedAgents.map((a) => a.toLowerCase());
@@ -158,8 +160,8 @@ function buildFindings(
     f.push({
       id: "edge-block", severity: "critical", evidence: "FACT",
       title: `Your CDN/WAF blocks ${edgeBlocked.length} AI crawler(s) that robots.txt allows`,
-      detail: `${names} get blocked at the edge even though your robots.txt permits them. ${platform.platform === "cloudflare" ? "This site is behind Cloudflare, which blocks AI bots by default on all zones created since 2025-07-01 (or via the 'Block AI Bots' toggle) — the block is edge-enforced and invisible in robots.txt." : "Your robots.txt is not the layer doing the blocking — check your CDN/WAF bot rules."}`,
-      fix: platform.platform === "cloudflare"
+      detail: `${names} get blocked at the edge even though your robots.txt permits them. ${extras.cfBlocking ? "The block responses carry Cloudflare challenge signatures — Cloudflare blocks AI bots by default on zones created since 2025-07-01 (or via the 'Block AI Bots' toggle); the block is edge-enforced and invisible in robots.txt." : "Your robots.txt is not the layer doing the blocking — check your CDN/WAF bot-management rules."}`,
+      fix: extras.cfBlocking
         ? "Cloudflare dashboard → Security → Bots → allow the AI crawlers you want citing you (search/user-fetch bots), or keep blocking training-only bots — your call, but make it a decision, not a default."
         : "Review your WAF/bot-management rules for User-Agent based blocks on AI crawlers.",
     });

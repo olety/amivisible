@@ -1,0 +1,3 @@
+# amivisible practices what it probes: everyone welcome, including AI crawlers.
+User-agent: *
+Allow: /

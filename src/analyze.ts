@@ -88,16 +88,21 @@ export function analyzeHtml(html: string): HtmlAnalysis {
 
 export interface PlatformFingerprint { platform: string | null; evidence: string[] }
 
+// IMPORTANT: when this code runs inside a Cloudflare Worker, the egress path
+// injects cf-ray / server: cloudflare / cf-cache-status into EVERY subrequest
+// response (verified live 2026-08-29 against pure-Vercel and GitHub origins).
+// Those headers are therefore useless as origin evidence here — only
+// origin-unique headers count, and Cloudflare itself is identified
+// behaviorally (cf-mitigated / challenge pages), not by header presence.
 export function fingerprintPlatform(headers: Headers): PlatformFingerprint {
   const evidence: string[] = [];
-  const server = headers.get("server")?.toLowerCase() ?? "";
   let platform: string | null = null;
-  if (headers.get("cf-ray") || server.includes("cloudflare")) { platform = "cloudflare"; evidence.push("cf-ray/server header"); }
-  else if (headers.get("x-vercel-id")) { platform = "vercel"; evidence.push("x-vercel-id header"); }
+  if (headers.get("x-vercel-id")) { platform = "vercel"; evidence.push("x-vercel-id header"); }
   else if (headers.get("x-nf-request-id")) { platform = "netlify"; evidence.push("x-nf-request-id header"); }
   else if (headers.get("x-amz-cf-id")) { platform = "aws-cloudfront"; evidence.push("x-amz-cf-id header"); }
-  else if (server.includes("akamai") || headers.get("x-akamai-transformed")) { platform = "akamai"; evidence.push("akamai headers"); }
-  else if (headers.get("x-served-by") && server.includes("varnish")) { platform = "fastly"; evidence.push("x-served-by + varnish"); }
+  else if (headers.get("x-akamai-transformed") || headers.get("x-akamai-request-id")) { platform = "akamai"; evidence.push("akamai headers"); }
+  else if (headers.get("x-served-by")?.includes("cache-")) { platform = "fastly"; evidence.push("x-served-by cache node"); }
+  else if (headers.get("x-github-request-id")) { platform = "github-pages"; evidence.push("x-github-request-id header"); }
   if (headers.get("cf-mitigated")) evidence.push(`cf-mitigated: ${headers.get("cf-mitigated")}`);
   return { platform, evidence };
 }
