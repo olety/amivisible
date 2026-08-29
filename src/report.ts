@@ -64,8 +64,11 @@ export async function runCheck(rawUrl: string): Promise<CheckReport> {
   ]);
 
   // Fail loudly rather than report a green board off dead probes
-  if (control.status === 0) {
-    throw new Error(`could not reach ${url.href} from our probes (${control.error ?? "no response"})`);
+  if (control.status === 0 || control.status >= 500) {
+    throw new Error(`could not reach ${url.href} (${control.status === 0 ? control.error ?? "no response" : `status ${control.status} — DNS failure or origin down`})`);
+  }
+  if (!control.ok) {
+    throw new Error(`${url.href} returned ${control.status} even to a plain browser probe — the site blocks our datacenter requests entirely, so a crawler comparison would be meaningless`);
   }
 
   const robotsTxtFound = robotsRes.ok && !!robotsRes.body && !/<html[\s>]/i.test(robotsRes.body.slice(0, 200));
