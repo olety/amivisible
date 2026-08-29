@@ -69,6 +69,13 @@ app.get("/api/markdown", async (c) => {
   if ("error" in target) return c.json({ error: target.error }, 400);
   try {
     const view = await markdownView(target.url.href);
+    if (c.req.query("raw") === "1") {
+      // human-readable: the markdown itself, rendered inline by the browser
+      const header = `<!-- ${target.url.href} through AI eyes · source: ${view.source} · via amivisible.dev -->\n\n`;
+      return c.text(view.markdown ? header + view.markdown : "(no readable content could be extracted)", 200, {
+        "content-type": "text/plain; charset=utf-8",
+      });
+    }
     return c.json(view);
   } catch (e) {
     return c.json({ error: "markdown view failed", detail: e instanceof Error ? e.message : String(e) }, 502);

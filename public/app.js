@@ -233,7 +233,7 @@ function render(data) {
   for (const m of data.methodology || []) meth.appendChild(el("li", null, m));
 
   // links + agent prompt personalization
-  $("md-link").href = `/api/markdown?url=${encodeURIComponent(currentUrl)}`;
+  $("md-link").href = `/api/markdown?url=${encodeURIComponent(currentUrl)}&raw=1`;
   personalizePrompt(data.finalUrl || currentUrl);
 
   $("report").hidden = false;

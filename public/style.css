@@ -42,14 +42,15 @@ body::after {
 
 a { color: var(--violet); }
 
-/* ---------- postcard hero ---------- */
+/* ---------- postcard hero (layered: bg plate / robot / floating window) ---------- */
 
 .postcard {
   position: relative;
   min-height: 92vh;
-  background: url("/assets/hero-plate.webp") center 35% / cover no-repeat;
+  background: url("/assets/bg-empty.webp") center 40% / cover no-repeat;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .topbar {
@@ -77,36 +78,85 @@ a { color: var(--violet); }
 }
 .topbar nav a:hover { border-bottom-color: var(--orange); }
 
-.hero {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 4vh 24px 0;
+.hero { flex: 1; position: relative; }
+
+.hero-copy {
+  position: absolute;
+  left: 6%;
+  top: 9vh;
+  max-width: 46vw;
 }
 
 .riso-title {
-  font-size: clamp(44px, 7vw, 84px);
+  font-size: clamp(44px, 6.2vw, 80px);
   font-weight: 800;
   line-height: 1.02;
-  margin: 2vh 0 12px;
+  margin: 0 0 12px;
   color: var(--violet);
   text-shadow: 4px 4px 0 var(--orange-soft);
   transform: rotate(-1.2deg);
 }
 
 .tagline {
-  font-size: clamp(16px, 1.8vw, 20px);
+  font-size: clamp(15px, 1.6vw, 19px);
   font-weight: 500;
-  margin: 0 0 26px;
+  margin: 0;
   color: var(--violet-deep);
 }
 
-#scan-form {
+/* the robot layer — cut from the plate, breathes gently, gazes at the window */
+.hero-robot {
+  position: absolute;
+  left: -2%;
+  bottom: -3%;
+  width: clamp(260px, 34vw, 540px);
+  transform-origin: 50% 100%;
+  animation: breathe 3.8s ease-in-out infinite alternate;
+  pointer-events: none;
+  user-select: none;
+}
+@keyframes breathe {
+  from { transform: translateY(0) rotate(0deg); }
+  to { transform: translateY(-6px) rotate(-0.5deg); }
+}
+
+/* the input IS the floating website the robot is looking at */
+.sky-window {
+  position: absolute;
+  right: 7%;
+  top: 22vh;
+  width: min(470px, 44vw);
+  background: var(--paper-light);
+  border: 3px solid var(--violet);
+  border-radius: 16px 20px 17px 21px / 20px 16px 21px 17px;
+  box-shadow: 6px 7px 0 var(--shadow);
+  animation: floaty 6.5s ease-in-out infinite alternate;
+}
+@keyframes floaty {
+  from { transform: rotate(1deg) translateY(0); }
+  to { transform: rotate(0.3deg) translateY(-9px); }
+}
+
+.sky-window-bar {
   display: flex;
-  gap: 10px;
-  width: min(560px, 92vw);
+  gap: 6px;
+  padding: 9px 12px;
+  background: var(--violet);
+  border-radius: 12px 16px 0 0 / 14px 12px 0 0;
+}
+.sky-window-bar span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--orange);
+}
+.sky-window-bar span:nth-child(2) { background: var(--orange-soft); }
+.sky-window-bar span:nth-child(3) { background: var(--paper); }
+
+.sky-window-body {
+  display: flex;
+  gap: 8px;
+  padding: 16px 16px 8px;
 }
 
 /* recessed well at rest, comes to the surface on focus (border + lift = the two signals) */
@@ -147,15 +197,12 @@ a { color: var(--violet); }
 .arrow { display: inline-block; }
 
 .hero-note {
-  margin-top: 18px;
+  margin: 6px 16px 12px;
+  padding-top: 8px;
+  border-top: 2px dashed var(--violet-soft);
   font-weight: 600;
-  font-size: 14px;
-  color: var(--violet);
-  background: var(--paper-light);
-  border: 2px solid var(--violet-soft);
-  border-radius: 999px;
-  padding: 5px 16px;
-  opacity: 0.92;
+  font-size: 12.5px;
+  color: var(--violet-soft);
 }
 .hero-note em { color: var(--orange-deep); font-style: normal; }
 
@@ -267,34 +314,41 @@ h2 {
   to { opacity: 1; transform: none; }
 }
 
-/* findings */
+/* findings — a printed inspection report: stamped severities, dashed rules, no boxes */
 .finding {
-  border: 2px solid var(--violet-soft);
-  border-left: 8px solid var(--violet-soft);
-  border-radius: 12px 14px 13px 15px / 14px 12px 15px 13px;
-  background: var(--paper);
-  padding: 12px 16px;
-  margin-bottom: 10px;
+  padding: 14px 4px;
+  border-bottom: 2px dashed var(--violet-soft);
 }
-.finding.critical { border-color: var(--orange-deep); }
-.finding.warning { border-color: var(--orange); }
-.finding.good { border-color: var(--violet); }
+.finding:last-child { border-bottom: none; }
 .finding-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .finding-title { font-weight: 700; font-size: 16.5px; }
 .badge {
+  display: inline-block;
   font-family: "IBM Plex Mono", monospace;
   font-size: 11px;
-  font-weight: 600;
-  padding: 1px 8px;
-  border-radius: 6px;
-  border: 1.5px solid currentColor;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 2px 9px;
+  border: 2.5px solid currentColor;
+  border-radius: 4px 6px 5px 7px / 6px 4px 7px 5px;
+  transform: rotate(-2deg);
+  opacity: 0.9;
 }
+.finding:nth-child(even) .badge:first-child { transform: rotate(1.5deg); }
 .badge.sev-critical { color: var(--orange-deep); }
 .badge.sev-warning { color: var(--orange); }
 .badge.sev-good { color: var(--violet); }
 .badge.sev-info { color: var(--violet-soft); }
-.badge.tier { color: var(--violet-soft); border-style: dashed; }
-.finding-detail { margin: 6px 0 0; font-size: 15px; }
+.badge.tier {
+  color: var(--violet-soft);
+  border-style: dashed;
+  border-width: 1.5px;
+  transform: none;
+  text-transform: none;
+  font-weight: 600;
+}
+.finding-detail { margin: 7px 0 0; font-size: 15px; }
 
 /* signals */
 .signals { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -380,11 +434,15 @@ footer {
 }
 footer a { color: var(--violet); }
 
-@media (max-width: 640px) {
-  .postcard { background-position: 28% 30%; min-height: 88vh; }
+@media (max-width: 760px) {
+  .postcard { background-position: 30% 65%; min-height: 96vh; }
   .topbar { padding: 14px 18px; }
   .topbar nav a { margin-left: 12px; font-size: 14px; }
-  #scan-form { flex-direction: column; }
+  .hero-copy { position: static; max-width: none; padding: 3vh 22px 0; text-align: center; }
+  .sky-window { position: static; width: min(470px, 92vw); margin: 4vh auto 0; }
+  .sky-window-body { flex-direction: column; }
+  .hero-robot { width: clamp(200px, 52vw, 300px); left: -4%; bottom: -2%; }
+  .hero { padding-bottom: 44vw; } /* room for the robot below the window */
   .paper-card { padding: 20px 18px; }
   #results { margin-top: -30px; }
 }
@@ -395,4 +453,5 @@ footer a { color: var(--violet); }
   html { scroll-behavior: auto; }
   .btn-secondary, #scan-btn, #url-input, .probe-cells .cell { transition: none; }
   #report:not([hidden]), #fixkit:not([hidden]), .check-error:not([hidden]) { animation: none; }
+  .hero-robot, .sky-window { animation: none; }
 }
