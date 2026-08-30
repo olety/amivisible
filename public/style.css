@@ -107,24 +107,31 @@ html, body { overflow-x: clip; }
   position: absolute;
   left: 6%;
   /* vw-anchored like the painting: keeps the text block above the robot's antenna (painting y~390 = 25.4vw) at every aspect ratio */
-  top: clamp(44px, 4.2vw, 88px);
+  top: clamp(36px, 3.6vw, 80px);
   max-width: 46vw;
   z-index: 3;
 }
 
 .riso-title {
-  font-size: clamp(44px, 6.2vw, 80px);
+  font-size: clamp(38px, 5.9vw, 80px);
   font-weight: 800;
   line-height: 1.02;
   margin: 0 0 12px;
   color: var(--violet);
-  text-shadow: 4px 4px 0 var(--orange-soft);
+  /* paper halo lets painted details (antenna, clouds) tuck behind the type */
+  text-shadow:
+    -3px -3px 0 var(--paper), 3px -3px 0 var(--paper), -3px 3px 0 var(--paper), 3px 3px 0 var(--paper),
+    0 -3px 0 var(--paper), 0 3px 0 var(--paper), -3px 0 0 var(--paper), 3px 0 0 var(--paper),
+    6px 6px 0 var(--orange-soft);
   transform: rotate(-1.2deg);
 }
 
 .tagline {
-  font-size: clamp(15px, 1.6vw, 19px);
+  font-size: clamp(14px, 1.55vw, 19px);
   font-weight: 500;
+  text-shadow:
+    -2px -2px 0 var(--paper), 2px -2px 0 var(--paper), -2px 2px 0 var(--paper), 2px 2px 0 var(--paper),
+    0 -2px 0 var(--paper), 0 2px 0 var(--paper), -2px 0 0 var(--paper), 2px 0 0 var(--paper);
   margin: 0;
   color: var(--violet-deep);
 }

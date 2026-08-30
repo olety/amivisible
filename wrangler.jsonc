@@ -8,5 +8,9 @@
     { "pattern": "amivisible.dev", "custom_domain": true },
     { "pattern": "www.amivisible.dev", "custom_domain": true }
   ],
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  "durable_objects": {
+    "bindings": [{ "name": "LIMITER", "class_name": "RateLimiter" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RateLimiter"] }]
 }

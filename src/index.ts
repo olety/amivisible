@@ -4,7 +4,36 @@ import { markdownView } from "./markdown";
 import { buildFixKit } from "./fixkit";
 import { handleMcp } from "./mcp";
 
-const app = new Hono();
+type Env = { LIMITER?: DurableObjectNamespace };
+
+// one Durable Object per client IP = a consistent 20-requests-per-minute bucket,
+// enough for any human or well-behaved agent, not enough to use us as a probe cannon
+export class RateLimiter {
+  private hits: number[] = [];
+  async fetch(): Promise<Response> {
+    const now = Date.now();
+    this.hits = this.hits.filter((t) => now - t < 60_000);
+    if (this.hits.length >= 20) return new Response("1");
+    this.hits.push(now);
+    return new Response("0");
+  }
+}
+
+const app = new Hono<{ Bindings: Env }>();
+
+async function overLimit(c: { env: Env; req: { header(n: string): string | undefined } }): Promise<boolean> {
+  const ns = c.env.LIMITER;
+  if (!ns) return false;
+  const key = c.req.header("cf-connecting-ip") || "anon";
+  try {
+    const stub = ns.get(ns.idFromName(key));
+    const res = await stub.fetch("https://limiter.internal/");
+    return (await res.text()) === "1";
+  } catch {
+    return false;
+  }
+}
+const LIMIT_MSG = { error: "easy there — 20 checks a minute per visitor. take a breath in the meadow and retry shortly." };
 
 app.get("/api/health", (c) => c.json({ ok: true, service: "amivisible" }));
 
@@ -34,6 +63,7 @@ function validateTarget(raw: string): { url: URL } | { error: string } {
 }
 
 app.get("/api/check", async (c) => {
+  if (await overLimit(c)) return c.json(LIMIT_MSG, 429);
   const raw = c.req.query("url");
   if (!raw) return c.json({ error: "missing ?url=" }, 400);
   const target = validateTarget(raw);
@@ -63,6 +93,7 @@ app.get("/api/check", async (c) => {
 });
 
 app.get("/api/markdown", async (c) => {
+  if (await overLimit(c)) return c.json(LIMIT_MSG, 429);
   const raw = c.req.query("url");
   if (!raw) return c.json({ error: "missing ?url=" }, 400);
   const target = validateTarget(raw);
@@ -83,6 +114,7 @@ app.get("/api/markdown", async (c) => {
 });
 
 app.get("/api/fixkit", async (c) => {
+  if (await overLimit(c)) return c.json(LIMIT_MSG, 429);
   const raw = c.req.query("url");
   if (!raw) return c.json({ error: "missing ?url=" }, 400);
   const target = validateTarget(raw);
@@ -96,6 +128,7 @@ app.get("/api/fixkit", async (c) => {
 
 // MCP: stateless streamable HTTP, no auth (no accounts, remember?)
 app.post("/mcp", async (c) => {
+  if (await overLimit(c)) return c.json(LIMIT_MSG, 429);
   let body: unknown;
   try { body = await c.req.json(); } catch { return c.json({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "parse error" } }, 400); }
   const requests = Array.isArray(body) ? body : [body];
