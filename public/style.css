@@ -97,11 +97,11 @@ html, body { overflow-x: clip; }
 /* turn-frame atlas (5x3) — positioned so his planted feet match the static sprite */
 .scene-robot-frames {
   position: absolute;
-  left: -12.03%;
-  top: -3.82%;
-  width: 145.19%;
-  height: 103.93%;
-  background-size: 500% 300%;
+  left: -14.95%;
+  top: -9.58%;
+  width: 159.87%;
+  height: 112.93%;
+  background-size: 500% 500%;
   background-repeat: no-repeat;
   animation: breathe 5.2s ease-in-out infinite alternate;
   transform-origin: 50% 92%;

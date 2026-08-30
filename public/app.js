@@ -429,54 +429,93 @@ const bindCopy = (btnId, srcId, label) => {
 bindCopy("copy-prompt", "agent-prompt", "copy prompt");
 bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
 
-// the scout really turns to follow your cursor — a sprite atlas of turn frames
-// (the gazeportrait technique): cursor position → smoothed sweep position →
-// atlas frame. The binoculars never leave his eyes: he scans, he doesn't stare.
-// Mapping is robot-relative — he stands at ~20% of the viewport, so the
-// right-aim half of the sweep covers everything from him to the right edge.
+// the scout really turns to follow your cursor — a sprite atlas of video turn
+// frames (the gazeportrait technique). The sweep is semantic, robot-relative:
+// cursor left of him → he aims left, right of him → he aims right, and the
+// single face-on frame is reachable ONLY while the cursor is actually on him —
+// he notices you. Otherwise he scans past you, binoculars up, never staring.
+// Tilt strips (rows 4-5 of the atlas) let him scan the sky and the flowers.
 // Static sprite stays for no-JS / reduced-motion.
 (() => {
   const wrap = $("scene-robot");
   if (!wrap) return;
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const COLS = 5, ROWS = 3, COUNT = 15, REST = 1; // rest = his painted right-aim
+  const GRID = 5;             // 5x5 atlas
+  const STARE = 5, REST = 0;  // H strip: cells 0..13, stare gated at 5
+  const H_LAST = 13;
+  const UP_N = 5, DOWN_N = 5; // tilt strip lengths (rows 3 and 4)
+  const cellOf = (strip, i) => strip === "up" ? 15 + i : strip === "down" ? 20 + i : i;
   const atlas = new Image();
   atlas.src = "/assets/robot-turn.webp";
-  let ready = false, live = false, frames = null;
-  let mouse = REST, smooth = REST, last = -1;
+  let ready = false, live = false, frames = null, lastCell = -1;
   atlas.onload = () => { ready = true; };
+  const cur = { strip: "h", pos: REST };
+  const tgt = { strip: "h", pos: REST };
+  const paint = () => {
+    let i = Math.round(cur.pos);
+    if (cur.strip === "h" && i === STARE && Math.round(tgt.pos) !== STARE)
+      i = cur.pos < STARE ? STARE - 1 : STARE + 1; // never linger on the stare in passing
+    const c = cellOf(cur.strip, i);
+    if (c === lastCell) return;
+    lastCell = c;
+    frames.style.backgroundPosition =
+      `${(c % GRID) / (GRID - 1) * 100}% ${Math.floor(c / GRID) / (GRID - 1) * 100}%`;
+  };
+  const tick = () => {
+    if (cur.strip !== tgt.strip) {
+      // glide to the junction (left profile = H rest = tilt level), then switch
+      const jun = 0;
+      const want = cur.strip === "h" ? (tgt.strip === "h" ? tgt.pos : jun) : jun;
+      cur.pos += (want - cur.pos) * 0.28;
+      if (Math.abs(cur.pos - jun) < 0.55 && (cur.strip === "h" ? tgt.strip !== "h" : true)) {
+        cur.strip = tgt.strip === "h" ? "h" : (cur.strip === "h" ? tgt.strip : "h");
+        cur.pos = tgt.strip === "h" && cur.strip === "h" ? cur.pos : 0;
+      }
+    } else {
+      cur.pos += (tgt.pos - cur.pos) * 0.25;
+    }
+    paint();
+    requestAnimationFrame(tick);
+  };
   const start = () => {
     live = true;
     frames = document.createElement("div");
     frames.className = "scene-robot-frames";
     frames.style.backgroundImage = `url(${atlas.src})`;
     wrap.appendChild(frames);
+    paint();
     wrap.querySelector(".scene-robot").style.visibility = "hidden";
-    const t0 = performance.now();
-    const tick = (now) => {
-      smooth += (mouse - smooth) * 0.3;
-      const drift = Math.sin((now - t0) / 3000) * 0.012;
-      const val = Math.max(0, Math.min(1, smooth + drift));
-      const i = Math.round(val * (COUNT - 1));
-      if (i !== last) {
-        last = i;
-        frames.style.backgroundPosition =
-          `${(i % COLS) / (COLS - 1) * 100}% ${Math.floor(i / COLS) / (ROWS - 1) * 100}%`;
-      }
-      requestAnimationFrame(tick);
-    };
     requestAnimationFrame(tick);
   };
   addEventListener("pointermove", (e) => {
     const r = wrap.getBoundingClientRect();
-    const rx = (r.left + r.width * 0.5) / innerWidth;
-    const x = e.clientX / innerWidth;
-    mouse = x >= rx
-      ? 0.5 + ((x - rx) / Math.max(0.05, 1 - rx)) * 0.5
-      : (x / Math.max(0.05, rx)) * 0.5;
-    if (!live && ready) start(); // first move brings him alive — masks the pose swap
+    if (r.bottom < 0 || r.top > innerHeight) return; // scrolled away — stand down
+    const hx = r.left + r.width * 0.5;
+    const hy = r.top + r.height * 0.35; // his head, not his feet
+    const dx = e.clientX - hx, dy = e.clientY - hy;
+    const onHim = Math.abs(dx) < r.width * 0.38 &&
+      e.clientY > r.top + r.height * 0.05 && e.clientY < r.bottom;
+    if (onHim) {
+      tgt.strip = "h"; tgt.pos = STARE;
+    } else {
+      const deg = Math.atan2(-dy, dx) * 180 / Math.PI;
+      if (UP_N > 0 && deg > 55 && -dy > r.height * 0.3) {
+        tgt.strip = "up";
+        tgt.pos = Math.min(1, (deg - 55) / 30) * (UP_N - 1);
+      } else if (DOWN_N > 0 && deg < -60 && dy > r.height * 0.45) {
+        tgt.strip = "down";
+        tgt.pos = Math.min(1, (-deg - 60) / 25) * (DOWN_N - 1);
+      } else {
+        tgt.strip = "h";
+        tgt.pos = dx < 0
+          ? (STARE - 1) * (1 - Math.min(1, -dx / Math.max(60, hx)))
+          : STARE + 1 + Math.min(1, dx / Math.max(60, innerWidth - hx)) * (H_LAST - STARE - 1);
+      }
+    }
+    // first real look brings him alive — the motion masks the sprite swap
+    if (!live && ready && (tgt.strip !== "h" || tgt.pos > 1.2)) start();
   }, { passive: true });
-  addEventListener("pointerleave", () => { mouse = REST; }, { passive: true });
+  addEventListener("pointerleave", () => { tgt.strip = "h"; tgt.pos = REST; }, { passive: true });
 })();
 
 // he perks up when you're about to type
