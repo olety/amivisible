@@ -430,9 +430,11 @@ bindCopy("copy-prompt", "agent-prompt", "copy prompt");
 bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
 
 // the scout really turns to follow your cursor — a sprite atlas of turn frames
-// (the gazeportrait technique): cursor x → smoothed sweep position → atlas
-// frame. Far left he aims left, center he lowers the binoculars and looks at
-// you, far right he aims right. Static sprite stays for no-JS / reduced-motion.
+// (the gazeportrait technique): cursor position → smoothed sweep position →
+// atlas frame. The binoculars never leave his eyes: he scans, he doesn't stare.
+// Mapping is robot-relative — he stands at ~20% of the viewport, so the
+// right-aim half of the sweep covers everything from him to the right edge.
+// Static sprite stays for no-JS / reduced-motion.
 (() => {
   const wrap = $("scene-robot");
   if (!wrap) return;
@@ -466,7 +468,12 @@ bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
     requestAnimationFrame(tick);
   };
   addEventListener("pointermove", (e) => {
-    mouse = e.clientX / innerWidth;
+    const r = wrap.getBoundingClientRect();
+    const rx = (r.left + r.width * 0.5) / innerWidth;
+    const x = e.clientX / innerWidth;
+    mouse = x >= rx
+      ? 0.5 + ((x - rx) / Math.max(0.05, 1 - rx)) * 0.5
+      : (x / Math.max(0.05, rx)) * 0.5;
     if (!live && ready) start(); // first move brings him alive — masks the pose swap
   }, { passive: true });
   addEventListener("pointerleave", () => { mouse = REST; }, { passive: true });
