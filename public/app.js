@@ -429,49 +429,52 @@ const bindCopy = (btnId, srcId, label) => {
 bindCopy("copy-prompt", "agent-prompt", "copy prompt");
 bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
 
-// the scout really turns to follow your cursor — a sprite atlas of video turn
-// frames (the gazeportrait technique). The sweep is semantic, robot-relative:
-// cursor left of him → he aims left, right of him → he aims right, and the
-// single face-on frame is reachable ONLY while the cursor is actually on him —
-// he notices you. Otherwise he scans past you, binoculars up, never staring.
-// Tilt strips (rows 4-5 of the atlas) let him scan the sky and the flowers.
-// Static sprite stays for no-JS / reduced-motion.
+// the scout follows your cursor across a 17-pose grid (face_looker-style,
+// regenerated as one consistent shoot). Screen-space 2D mapping: the level
+// row sweeps left-to-right (face-on is hover-only), the sky and flower rows
+// take over when the cursor is clearly high or low, and the SIDE always
+// follows the cursor. Row changes are sticky (200ms) and jump to the
+// neighbouring pose - no cross-screen swings. Static sprite stays for
+// no-JS / reduced-motion.
 (() => {
   const wrap = $("scene-robot");
   if (!wrap) return;
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const GRID = 5;             // 5x5 atlas
-  const STARE = 5, REST = 0;  // H strip: cells 0..13, stare gated at 5
-  const H_LAST = 13;
-  const UP_N = 5, DOWN_N = 5; // tilt strip lengths (rows 3 and 4)
-  const cellOf = (strip, i) => strip === "up" ? 15 + i : strip === "down" ? 20 + i : i;
+  const GRID = 5;
+  const LEVEL_N = 9, C = 4;                 // level row: cells 0..8, C gated
+  const cellOf = (row, i) =>
+    row === "sky" ? 10 + i : row === "flower" ? 15 + i : i;
   const atlas = new Image();
-  atlas.src = "/assets/robot-turn.webp";
+  atlas.src = "/assets/robot-turn.webp?v=3";
   let ready = false, live = false, frames = null, lastCell = -1;
   atlas.onload = () => { ready = true; };
-  const cur = { strip: "h", pos: REST };
-  const tgt = { strip: "h", pos: REST };
+  const cur = { row: "level", pos: 0 };
+  let want = { row: "level", pos: 0 };
+  let pendRow = null, pendSince = 0;
+  const colFromLevel = (p) => Math.max(0, Math.min(3, Math.round(p / 8 * 3)));
   const paint = () => {
     let i = Math.round(cur.pos);
-    if (cur.strip === "h" && i === STARE && Math.round(tgt.pos) !== STARE)
-      i = cur.pos < STARE ? STARE - 1 : STARE + 1; // never linger on the stare in passing
-    const c = cellOf(cur.strip, i);
+    if (cur.row === "level" && i === C && Math.round(want.pos) !== C)
+      i = cur.pos < C ? C - 1 : C + 1; // never linger face-on in passing
+    const c = cellOf(cur.row, i);
     if (c === lastCell) return;
     lastCell = c;
     frames.style.backgroundPosition =
       `${(c % GRID) / (GRID - 1) * 100}% ${Math.floor(c / GRID) / (GRID - 1) * 100}%`;
   };
-  const tick = () => {
-    if (cur.strip !== tgt.strip) {
-      // swing briskly through the junction (left profile = H rest = tilt level)
-      cur.pos += (0 - cur.pos) * 0.45;
-      if (Math.abs(cur.pos) < 1.05) {
-        cur.strip = cur.strip === "h" && tgt.strip !== "h" ? tgt.strip : "h";
-        cur.pos = 0;
+  const tick = (now) => {
+    if (want.row !== cur.row) {
+      if (pendRow !== want.row) { pendRow = want.row; pendSince = now; }
+      else if (now - pendSince > 200) {
+        const from = cur.row, p = cur.pos;
+        cur.row = want.row;
+        cur.pos = cur.row === "level"
+          ? (from === "level" ? p : (p / 3) * 8)
+          : (from === "level" ? colFromLevel(p) : colFromLevel((p / 3) * 8));
+        pendRow = null;
       }
-    } else {
-      cur.pos += (tgt.pos - cur.pos) * 0.25;
-    }
+    } else pendRow = null;
+    if (want.row === cur.row) cur.pos += (want.pos - cur.pos) * 0.25;
     paint();
     requestAnimationFrame(tick);
   };
@@ -487,38 +490,30 @@ bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
   };
   addEventListener("pointermove", (e) => {
     const r = wrap.getBoundingClientRect();
-    if (r.bottom < 0 || r.top > innerHeight) return; // scrolled away — stand down
+    if (r.bottom < 0 || r.top > innerHeight) return; // scrolled away
     const hx = r.left + r.width * 0.5;
-    const hy = r.top + r.height * 0.35; // his head, not his feet
+    const hy = r.top + r.height * 0.35; // his head
     const dx = e.clientX - hx, dy = e.clientY - hy;
     const onHim = Math.abs(dx) < r.width * 0.38 &&
       e.clientY > r.top + r.height * 0.05 && e.clientY < r.bottom;
+    const h = dx < 0 ? -Math.min(1, -dx / Math.max(60, hx))
+                     :  Math.min(1, dx / Math.max(60, innerWidth - hx));
+    const v = dy < 0 ? -Math.min(1, -dy / Math.max(60, hy))
+                     :  Math.min(1, dy / Math.max(60, innerHeight - hy));
     if (onHim) {
-      tgt.strip = "h"; tgt.pos = STARE;
+      want = { row: "level", pos: C };
+    } else if (v < -0.30 && Math.abs(v) > Math.abs(h) * 0.8) {
+      want = { row: "sky", pos: h < -0.5 ? 0 : h < 0 ? 1 : h < 0.5 ? 2 : 3 };
+    } else if (v > 0.36 && v > Math.abs(h) * 0.8) {
+      want = { row: "flower", pos: h < -0.5 ? 0 : h < 0 ? 1 : h < 0.5 ? 2 : 3 };
     } else {
-      // screen-space gaze: how far above/below his head, how far to the side —
-      // each normalized by the room the cursor actually has in that direction.
-      // Vertical wins when it dominates: cursor high = he scans up, low = down.
-      const upness = -dy / Math.max(120, hy);
-      const downness = dy / Math.max(120, innerHeight - hy);
-      const sideness = Math.abs(dx) / Math.max(120, dx > 0 ? innerWidth - hx : hx);
-      if (UP_N > 0 && upness > 0.22 && upness > sideness * 0.85) {
-        tgt.strip = "up";
-        tgt.pos = Math.min(1, (upness - 0.15) / 0.6) * (UP_N - 1);
-      } else if (DOWN_N > 0 && downness > 0.3 && downness > sideness * 0.85) {
-        tgt.strip = "down";
-        tgt.pos = Math.min(1, (downness - 0.2) / 0.55) * (DOWN_N - 1);
-      } else {
-        tgt.strip = "h";
-        tgt.pos = dx < 0
-          ? (STARE - 1) * (1 - Math.min(1, -dx / Math.max(60, hx)))
-          : STARE + 1 + Math.min(1, dx / Math.max(60, innerWidth - hx)) * (H_LAST - STARE - 1);
-      }
+      let p = (h + 1) * 4;
+      if (Math.round(p) === C) p = p < C ? C - 1 : C + 1;
+      want = { row: "level", pos: p };
     }
-    // first real look brings him alive — the motion masks the sprite swap
-    if (!live && ready && (tgt.strip !== "h" || tgt.pos > 1.2)) start();
+    if (!live && ready && (want.row !== "level" || want.pos > 1.2)) start();
   }, { passive: true });
-  addEventListener("pointerleave", () => { tgt.strip = "h"; tgt.pos = REST; }, { passive: true });
+  addEventListener("pointerleave", () => { want = { row: "level", pos: 0 }; }, { passive: true });
 })();
 
 // he perks up when you're about to type
