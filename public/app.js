@@ -502,12 +502,12 @@ bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
                      :  Math.min(1, dy / Math.max(60, innerHeight - hy));
     if (onHim) {
       want = { row: "level", pos: C };
-    } else if (v < -0.30 && Math.abs(v) > Math.abs(h) * 0.8) {
+    } else if (v < -0.30 && Math.abs(v) > Math.abs(h) * (dx < 0 ? 0.42 : 0.8)) {
       // side from left/right, depth from the sight-line: the more directly
       // overhead the cursor is, the higher he cranes (deep > 45 degrees)
       const deep = Math.atan2(-dy, Math.abs(dx)) > 0.785;
       want = { row: "sky", pos: h < 0 ? (deep ? 0 : 1) : (deep ? 3 : 2) };
-    } else if (v > 0.36 && v > Math.abs(h) * 0.8) {
+    } else if (v > 0.36 && v > Math.abs(h) * (dx < 0 ? 0.42 : 0.8)) {
       const deep = Math.atan2(dy, Math.abs(dx)) > 0.873; // > 50 degrees
       want = { row: "flower", pos: h < 0 ? (deep ? 0 : 1) : (deep ? 3 : 2) };
     } else {
