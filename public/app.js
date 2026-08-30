@@ -463,13 +463,11 @@ bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
   };
   const tick = () => {
     if (cur.strip !== tgt.strip) {
-      // glide to the junction (left profile = H rest = tilt level), then switch
-      const jun = 0;
-      const want = cur.strip === "h" ? (tgt.strip === "h" ? tgt.pos : jun) : jun;
-      cur.pos += (want - cur.pos) * 0.28;
-      if (Math.abs(cur.pos - jun) < 0.55 && (cur.strip === "h" ? tgt.strip !== "h" : true)) {
-        cur.strip = tgt.strip === "h" ? "h" : (cur.strip === "h" ? tgt.strip : "h");
-        cur.pos = tgt.strip === "h" && cur.strip === "h" ? cur.pos : 0;
+      // swing briskly through the junction (left profile = H rest = tilt level)
+      cur.pos += (0 - cur.pos) * 0.45;
+      if (Math.abs(cur.pos) < 1.05) {
+        cur.strip = cur.strip === "h" && tgt.strip !== "h" ? tgt.strip : "h";
+        cur.pos = 0;
       }
     } else {
       cur.pos += (tgt.pos - cur.pos) * 0.25;
@@ -498,13 +496,18 @@ bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
     if (onHim) {
       tgt.strip = "h"; tgt.pos = STARE;
     } else {
-      const deg = Math.atan2(-dy, dx) * 180 / Math.PI;
-      if (UP_N > 0 && deg > 55 && -dy > r.height * 0.3) {
+      // screen-space gaze: how far above/below his head, how far to the side —
+      // each normalized by the room the cursor actually has in that direction.
+      // Vertical wins when it dominates: cursor high = he scans up, low = down.
+      const upness = -dy / Math.max(120, hy);
+      const downness = dy / Math.max(120, innerHeight - hy);
+      const sideness = Math.abs(dx) / Math.max(120, dx > 0 ? innerWidth - hx : hx);
+      if (UP_N > 0 && upness > 0.22 && upness > sideness * 0.85) {
         tgt.strip = "up";
-        tgt.pos = Math.min(1, (deg - 55) / 30) * (UP_N - 1);
-      } else if (DOWN_N > 0 && deg < -60 && dy > r.height * 0.45) {
+        tgt.pos = Math.min(1, (upness - 0.15) / 0.6) * (UP_N - 1);
+      } else if (DOWN_N > 0 && downness > 0.3 && downness > sideness * 0.85) {
         tgt.strip = "down";
-        tgt.pos = Math.min(1, (-deg - 60) / 25) * (DOWN_N - 1);
+        tgt.pos = Math.min(1, (downness - 0.2) / 0.55) * (DOWN_N - 1);
       } else {
         tgt.strip = "h";
         tgt.pos = dx < 0
