@@ -21,7 +21,7 @@ body {
   margin: 0;
   /* one continuous painting for the whole page: sunset hero → dusk glow → firefly
      meadow; below the bitmap the meadow's own violet carries on as flat color */
-  background: #283776 url("/assets/scene.webp") top center / 100% auto no-repeat;
+  background: #283776 url("/assets/scene2x.webp") top center / 100% auto no-repeat;
   color: var(--violet-deep);
   font-family: "Baloo 2", system-ui, sans-serif;
   font-size: 17px;
@@ -106,6 +106,7 @@ a { color: var(--violet); }
   left: 6%;
   top: 9vh;
   max-width: 46vw;
+  z-index: 3;
 }
 
 .riso-title {
@@ -126,15 +127,21 @@ a { color: var(--violet); }
 }
 
 /* the robot layer — cut from the plate, breathes gently, gazes at the window */
-.hero-robot {
+.hero-unit {
   position: absolute;
-  left: -2%;
-  bottom: -3%;
-  width: clamp(260px, 34vw, 540px);
-  transform-origin: 50% 100%;
-  animation: breathe 3.8s ease-in-out infinite alternate;
+  left: -1vw;
+  bottom: 2vh;
+  width: clamp(300px, min(38vw, 52vh), 640px);
   pointer-events: none;
   user-select: none;
+}
+.hero-unit .unit-base { display: block; width: 100%; height: auto; }
+.hero-unit video {
+  position: absolute;
+  left: 16.61%;
+  top: -0.32%;
+  width: 66.96%;
+  clip-path: inset(0 0 8.9% 0);
 }
 @keyframes breathe {
   from { transform: translateY(0) rotate(0deg); }
@@ -468,14 +475,14 @@ footer {
 footer a { color: var(--violet); }
 
 @media (max-width: 760px) {
-  body { background-size: 235% auto; background-position: 50% top; }
+  body { background-image: url("/assets/scene-sm.webp"); background-size: 235% auto; background-position: 50% top; }
   .postcard { min-height: 96vh; }
   .topbar { padding: 14px 18px; }
   .topbar nav a { margin-left: 12px; font-size: 14px; }
   .hero-copy { position: static; max-width: none; padding: 3vh 22px 0; text-align: center; }
   .sky-window { position: static; width: min(470px, 92vw); margin: 4vh auto 0; }
   .sky-window-body { flex-direction: column; }
-  .hero-robot { width: clamp(200px, 52vw, 300px); left: -4%; bottom: -2%; }
+  .hero-unit { width: clamp(240px, 62vw, 400px); left: 0; bottom: 4vw; }
   .hero { padding-bottom: 44vw; } /* room for the robot below the window */
   .paper-card { padding: 20px 18px; }
 
@@ -487,5 +494,5 @@ footer a { color: var(--violet); }
   html { scroll-behavior: auto; }
   .btn-secondary, #scan-btn, #url-input, .probe-cells .cell { transition: none; }
   #report:not([hidden]), #fixkit:not([hidden]), .check-error:not([hidden]) { animation: none; }
-  .hero-robot, .sky-window { animation: none; }
+  .hero-unit, .sky-window { animation: none; }
 }

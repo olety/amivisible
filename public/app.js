@@ -319,7 +319,7 @@ $("copy-prompt").addEventListener("click", async () => {
 
 // reduced motion: freeze the robot on his poster frame
 if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-  const rv = document.querySelector("video.hero-robot");
+  const rv = document.querySelector(".hero-unit video");
   if (rv) { rv.removeAttribute("autoplay"); rv.pause(); rv.load(); }
 }
 
