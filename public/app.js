@@ -447,11 +447,16 @@ bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
   addEventListener("pointermove", (e) => {
     const r = wrap.getBoundingClientRect();
     if (r.bottom < 0) return; // scrolled past the hero
-    const dx = (e.clientX - (r.left + r.width / 2)) / innerWidth;
-    const dy = (e.clientY - (r.top + r.height * 0.4)) / innerHeight;
-    tx = Math.max(-1, Math.min(1, dx * 2)) * 7;
-    ty = Math.max(-1, Math.min(1, dy * 2)) * 4;
-    tr = Math.max(-1, Math.min(1, dx * 2)) * 2.4;
+    // aim the binoculars at the cursor: pivot sits where he holds them
+    const px = r.left + r.width * 0.62, py = r.top + r.height * 0.28;
+    const dx = e.clientX - px, dy = e.clientY - py;
+    const theta = Math.atan2(dy, dx) * 180 / Math.PI; // 0° = right, negative = up
+    // the sprite's resting aim is ~19° above horizontal; he can only track
+    // where the binoculars face, so ease back to rest past his left shoulder
+    const reach = Math.max(0, Math.min(1, dx / (innerWidth * 0.06)));
+    tr = Math.max(-11, Math.min(11, theta + 19)) * reach;
+    tx = Math.max(-1, Math.min(1, (dx / innerWidth) * 2)) * 7;
+    ty = Math.max(-1, Math.min(1, (dy / innerHeight) * 2)) * 4;
     aim();
   }, { passive: true });
   addEventListener("pointerleave", () => { tx = ty = tr = 0; aim(); });

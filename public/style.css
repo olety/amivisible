@@ -88,6 +88,7 @@ html, body { overflow-x: clip; }
   top: 27.17vw;
   width: 19.04vw;
   will-change: transform;
+  transform-origin: 50% 74%; /* pivot at the hips — he leans, feet stay planted */
   transition: margin-top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 /* he notices when you're about to type */
