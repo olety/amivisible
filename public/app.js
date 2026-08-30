@@ -429,37 +429,47 @@ const bindCopy = (btnId, srcId, label) => {
 bindCopy("copy-prompt", "agent-prompt", "copy prompt");
 bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
 
-// the scout tracks your cursor — the robot is a real layer, so he can move.
-// Gentle lerp toward the pointer; eases back to rest when it leaves.
+// the scout really turns to follow your cursor — a sprite atlas of turn frames
+// (the gazeportrait technique): cursor x → smoothed sweep position → atlas
+// frame. Far left he aims left, center he lowers the binoculars and looks at
+// you, far right he aims right. Static sprite stays for no-JS / reduced-motion.
 (() => {
   const wrap = $("scene-robot");
   if (!wrap) return;
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  if (!matchMedia("(pointer: fine)").matches) return;
-  let tx = 0, ty = 0, tr = 0, cx = 0, cy = 0, cr = 0, raf = 0;
-  const tick = () => {
-    cx += (tx - cx) * 0.06; cy += (ty - cy) * 0.06; cr += (tr - cr) * 0.06;
-    wrap.style.transform = `translate(${cx.toFixed(2)}px, ${cy.toFixed(2)}px) rotate(${cr.toFixed(3)}deg)`;
-    if (Math.abs(tx - cx) + Math.abs(ty - cy) + Math.abs(tr - cr) > 0.05) raf = requestAnimationFrame(tick);
-    else raf = 0;
+  const COLS = 5, ROWS = 3, COUNT = 15, REST = 1; // rest = his painted right-aim
+  const atlas = new Image();
+  atlas.src = "/assets/robot-turn.webp";
+  let ready = false, live = false, frames = null;
+  let mouse = REST, smooth = REST, last = -1;
+  atlas.onload = () => { ready = true; };
+  const start = () => {
+    live = true;
+    frames = document.createElement("div");
+    frames.className = "scene-robot-frames";
+    frames.style.backgroundImage = `url(${atlas.src})`;
+    wrap.appendChild(frames);
+    wrap.querySelector(".scene-robot").style.visibility = "hidden";
+    const t0 = performance.now();
+    const tick = (now) => {
+      smooth += (mouse - smooth) * 0.3;
+      const drift = Math.sin((now - t0) / 3000) * 0.012;
+      const val = Math.max(0, Math.min(1, smooth + drift));
+      const i = Math.round(val * (COUNT - 1));
+      if (i !== last) {
+        last = i;
+        frames.style.backgroundPosition =
+          `${(i % COLS) / (COLS - 1) * 100}% ${Math.floor(i / COLS) / (ROWS - 1) * 100}%`;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   };
-  const aim = () => { if (!raf) raf = requestAnimationFrame(tick); };
   addEventListener("pointermove", (e) => {
-    const r = wrap.getBoundingClientRect();
-    if (r.bottom < 0) return; // scrolled past the hero
-    // aim the binoculars at the cursor: pivot sits where he holds them
-    const px = r.left + r.width * 0.62, py = r.top + r.height * 0.28;
-    const dx = e.clientX - px, dy = e.clientY - py;
-    const theta = Math.atan2(dy, dx) * 180 / Math.PI; // 0° = right, negative = up
-    // the sprite's resting aim is ~19° above horizontal; he can only track
-    // where the binoculars face, so ease back to rest past his left shoulder
-    const reach = Math.max(0, Math.min(1, dx / (innerWidth * 0.06)));
-    tr = Math.max(-11, Math.min(11, theta + 19)) * reach;
-    tx = Math.max(-1, Math.min(1, (dx / innerWidth) * 2)) * 7;
-    ty = Math.max(-1, Math.min(1, (dy / innerHeight) * 2)) * 4;
-    aim();
+    mouse = e.clientX / innerWidth;
+    if (!live && ready) start(); // first move brings him alive — masks the pose swap
   }, { passive: true });
-  addEventListener("pointerleave", () => { tx = ty = tr = 0; aim(); });
+  addEventListener("pointerleave", () => { mouse = REST; }, { passive: true });
 })();
 
 // he perks up when you're about to type

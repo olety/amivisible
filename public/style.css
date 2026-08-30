@@ -93,6 +93,20 @@ html, body { overflow-x: clip; }
 }
 /* he notices when you're about to type */
 .scene-robot-wrap.perk { margin-top: -12px; }
+
+/* turn-frame atlas (5x3) — positioned so his planted feet match the static sprite */
+.scene-robot-frames {
+  position: absolute;
+  left: -12.03%;
+  top: -3.82%;
+  width: 145.19%;
+  height: 103.93%;
+  background-size: 500% 300%;
+  background-repeat: no-repeat;
+  animation: breathe 5.2s ease-in-out infinite alternate;
+  transform-origin: 50% 92%;
+  pointer-events: none;
+}
 .scene-robot {
   display: block;
   width: 100%;
