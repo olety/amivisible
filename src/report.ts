@@ -336,12 +336,21 @@ function buildFindings(
     });
   }
 
-  // llms.txt — honestly labeled
-  f.push({
-    id: "llms-txt", severity: "info", evidence: "SPECULATIVE",
-    title: extras.llmsPresent ? "llms.txt present (no engine is documented to read it)" : "No llms.txt (you're not missing much — no engine is documented to read it)",
-    detail: "Zero of the five major AI engines document consuming llms.txt; an Ahrefs study across ~5,000 domains found zero attributable citations from it. We report it as info and never score it.",
-  });
+  // llms.txt — pro-AI hospitality, honestly labeled (never scored)
+  if (extras.llmsPresent) {
+    f.push({
+      id: "llms-txt", severity: "good", evidence: "SPECULATIVE",
+      title: "llms.txt present — the welcome mat is out for the agent web",
+      detail: "No major engine documents consuming llms.txt yet (an Ahrefs study across ~5,000 domains found zero attributable citations), so it never affects your score. But agents pointed at a site do fetch it, it costs one static file, and it tells every AI reader you want them here. We serve one ourselves.",
+    });
+  } else {
+    f.push({
+      id: "llms-txt", severity: "info", evidence: "SPECULATIVE",
+      title: "No llms.txt — one static file would greet the agent web",
+      detail: "No major engine documents consuming llms.txt yet (an Ahrefs study across ~5,000 domains found zero attributable citations), so this never affects your score. But coding agents and AI browsers pointed at your site do fetch it, it costs nothing to serve, and it's the friendly move. The fix kit drafts one for you.",
+      fix: "Serve /llms.txt — a short markdown index of your key pages. GET https://amivisible.dev/api/fixkit returns a draft.",
+    });
+  }
 
   // Markdown negotiation
   if (extras.mdSupported) {

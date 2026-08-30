@@ -50,35 +50,41 @@
 
 <div class="meadow">
 <main id="results" class="paper-card" hidden>
-  <div id="probe-log" class="probe-log"></div>
+  <div id="scanline" class="scanline" hidden></div>
+  <div id="verdict" class="verdict" aria-live="polite" hidden>
+    <div class="verdict-num"><span id="v-visible">–</span><span class="verdict-slash">/</span><span id="v-total">–</span></div>
+    <p id="v-text" class="verdict-text"></p>
+    <p class="verdict-sub">checked <span id="v-url" class="mono"></span></p>
+  </div>
+  <div id="stage"></div>
   <div id="report" hidden>
-    <div class="verdict" aria-live="polite">
-      <div class="verdict-num"><span id="v-visible">–</span><span class="verdict-slash">/</span><span id="v-total">–</span></div>
-      <p id="v-text" class="verdict-text"></p>
-      <p class="verdict-sub">checked <span id="v-url" class="mono"></span></p>
+    <section class="block" id="working-block">
+      <h2>working for you</h2>
+      <div id="working"></div>
+    </section>
+
+    <section class="block" id="improve-block">
+      <h2>how to improve</h2>
+      <p class="improve-lead" id="improve-lead">Copy this into Claude Code, Codex, Cursor — any coding agent. It applies the fixes and verifies the score itself. Click any item below for the human story.</p>
+      <div class="prompt-box" id="fix-prompt-box">
+        <pre id="fix-prompt"></pre>
+        <button id="copy-fix" class="btn-secondary btn-orange">copy fix prompt</button>
+      </div>
+      <p class="all-clear-note" id="improve-clear" hidden>Nothing to fix — every check we run comes back clean. You're set for the agent web.</p>
+      <div id="improve"></div>
+    </section>
+
+    <div class="actions">
+      <button id="fixkit-btn" class="btn-secondary">get the raw fix kit</button>
+      <a id="md-link" class="btn-secondary" target="_blank" rel="noopener">view as markdown</a>
+      <button id="fresh-btn" class="btn-secondary">re-check (fresh)</button>
     </div>
-
-    <section class="block">
-      <h2>crawler by crawler</h2>
-      <div id="crawler-groups"></div>
-    </section>
-
-    <section class="block">
-      <h2>findings</h2>
-      <div id="findings"></div>
-    </section>
+    <div id="fixkit" hidden></div>
 
     <section class="block">
       <h2>signals</h2>
       <div id="signals" class="signals"></div>
     </section>
-
-    <div class="actions">
-      <button id="fixkit-btn" class="btn-secondary">get the fix kit</button>
-      <button id="fresh-btn" class="btn-secondary">re-check (fresh)</button>
-      <a id="md-link" class="btn-secondary" target="_blank" rel="noopener">view as markdown</a>
-    </div>
-    <div id="fixkit" hidden></div>
 
     <details class="methodology">
       <summary>how this was measured</summary>

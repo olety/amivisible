@@ -21,7 +21,7 @@ body {
   margin: 0;
   /* one continuous painting for the whole page: sunset hero → dusk glow → firefly
      meadow; below the bitmap the meadow's own violet carries on as flat color */
-  background: #283776 url("/assets/scene2x.webp") top center / 100% auto no-repeat;
+  background: #1a2a63 url("/assets/scene2x.webp") top center / 100% auto no-repeat;
   color: var(--violet-deep);
   font-family: "Baloo 2", system-ui, sans-serif;
   font-size: 17px;
@@ -106,14 +106,14 @@ html, body { overflow-x: clip; }
 .hero-copy {
   position: absolute;
   left: 6%;
-  /* vw-anchored like the painting: keeps the text block above the robot's antenna (painting y~390 = 25.4vw) at every aspect ratio */
+  /* vw-anchored like the painting; the robot lives bottom-left now, clear of the type */
   top: clamp(36px, 3.6vw, 80px);
   max-width: 46vw;
   z-index: 3;
 }
 
 .riso-title {
-  font-size: clamp(38px, 5.9vw, 80px);
+  font-size: clamp(40px, 6.4vw, 88px);
   font-weight: 800;
   line-height: 1.02;
   margin: 0 0 12px;
@@ -265,39 +265,16 @@ h2 {
 
 .block { margin-top: 28px; }
 
-/* probe cells — one stamped block per crawler, lights as probes run */
-.probe-cells { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-.probe-cells .cell {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 3px 9px;
-  border: 2px solid var(--violet-soft);
-  border-radius: 6px 8px 7px 9px / 8px 6px 9px 7px;
-  color: var(--violet-soft);
-  background: transparent;
-  transition: background 0.24s cubic-bezier(0.23, 1, 0.32, 1),
-              color 0.24s cubic-bezier(0.23, 1, 0.32, 1),
-              border-color 0.24s cubic-bezier(0.23, 1, 0.32, 1);
-}
-.probe-cells .cell.lit {
-  background: var(--orange);
-  border-color: var(--violet);
-  color: var(--paper-light);
-}
-
-/* probe log */
-.probe-log {
+/* scan status — one rotating mono line above the grid while probes run */
+.scanline {
   font-family: "IBM Plex Mono", monospace;
   font-size: 14px;
+  font-weight: 600;
   line-height: 1.9;
   color: var(--violet-deep);
+  margin-bottom: 12px;
 }
-.probe-log .step::before { content: "· "; color: var(--violet-soft); }
-.probe-log .step.done::before { content: "✓ "; color: var(--orange-deep); font-weight: 600; }
-.probe-log .step.active::before { content: "→ "; color: var(--orange); }
-.probe-log .step { opacity: 0.55; }
-.probe-log .step.active, .probe-log .step.done { opacity: 1; }
+.scanline::before { content: "\2192 "; color: var(--orange); }
 
 /* verdict */
 .verdict { text-align: center; padding: 8px 0 4px; }
@@ -338,6 +315,20 @@ h2 {
 .stamp:hover { background: var(--orange-soft); color: var(--violet-deep); }
 .stamp.open { background: var(--violet); color: var(--paper); border-color: var(--violet); transform: none; }
 .stamp.open.no { background: var(--orange-deep); border-color: var(--orange-deep); }
+.stamp.pending {
+  border-color: var(--violet-soft);
+  color: var(--violet-soft);
+  cursor: default;
+  transition: background 0.24s cubic-bezier(0.23, 1, 0.32, 1),
+              color 0.24s cubic-bezier(0.23, 1, 0.32, 1),
+              border-color 0.24s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.stamp.pending:hover { background: transparent; color: var(--violet-soft); }
+.stamp.pending.scan {
+  background: var(--orange);
+  border-color: var(--violet);
+  color: var(--paper-light);
+}
 
 .stamp-detail {
   margin-top: 12px;
@@ -373,14 +364,33 @@ h2 {
   to { opacity: 1; transform: none; }
 }
 
-/* findings — a printed inspection report: stamped severities, dashed rules, no boxes */
-.finding {
-  padding: 14px 4px;
-  border-bottom: 2px dashed var(--violet-soft);
+/* findings — collapsed rows; the human story reveals on click */
+.frow { border-bottom: 2px dashed var(--violet-soft); }
+.frow:last-child { border-bottom: none; }
+.frow-sum {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 4px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  font-size: 16px;
 }
-.finding:last-child { border-bottom: none; }
-.finding-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.finding-title { font-weight: 700; font-size: 16.5px; }
+.frow-sum::-webkit-details-marker { display: none; }
+.frow-sum::after {
+  content: "\25B8";
+  margin-left: auto;
+  color: var(--violet-soft);
+  transition: transform 0.15s ease;
+}
+.frow[open] .frow-sum::after { transform: rotate(90deg); }
+.frow-body { padding: 0 4px 14px; }
+.frow-check { color: var(--violet); font-weight: 800; font-size: 18px; }
+.frow.sev-info .frow-title { font-weight: 600; }
+.frow-fix { margin: 8px 0 0; font-size: 15px; }
+.frow-fix b { color: var(--orange-deep); }
 .badge {
   display: inline-block;
   font-family: "IBM Plex Mono", monospace;
@@ -394,7 +404,7 @@ h2 {
   transform: rotate(-2deg);
   opacity: 0.9;
 }
-.finding:nth-child(even) .badge:first-child { transform: rotate(1.5deg); }
+.frow:nth-child(even) .badge:first-child { transform: rotate(1.5deg); }
 .badge.sev-critical { color: var(--orange-deep); }
 .badge.sev-warning { color: var(--orange); }
 .badge.sev-good { color: var(--violet); }
@@ -408,6 +418,13 @@ h2 {
   font-weight: 600;
 }
 .finding-detail { margin: 7px 0 0; font-size: 15px; }
+
+.improve-lead { margin: 0 0 12px; font-size: 15px; font-weight: 600; color: var(--violet); }
+.all-clear-note { margin: 0 0 12px; font-weight: 700; color: var(--violet); }
+.btn-orange { background: var(--orange); color: var(--paper-light); }
+.btn-orange:hover { background: var(--orange-deep); }
+#fix-prompt-box { margin-bottom: 8px; }
+#fix-prompt-box pre { margin: 0 0 10px; }
 
 /* signals */
 .signals { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -494,7 +511,7 @@ footer {
 footer a { color: var(--violet); }
 
 @media (max-width: 820px) {
-  body { background-image: url("/assets/scene-sm.webp"); background-size: 235% auto; background-position: 24% top; }
+  body { background-image: url("/assets/scene-sm.webp"); background-size: 235% auto; background-position: 4% top; }
   .postcard { min-height: 96vh; }
   .topbar { padding: 14px 12px; }
   .topbar nav a { margin-left: 10px; font-size: 13px; }
@@ -522,7 +539,7 @@ footer a { color: var(--violet); }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .btn-secondary, #scan-btn, #url-input, .probe-cells .cell { transition: none; }
+  .btn-secondary, #scan-btn, #url-input, .stamp { transition: none; }
   #report:not([hidden]), #fixkit:not([hidden]), .check-error:not([hidden]) { animation: none; }
   .sky-window { animation: none; }
 }
