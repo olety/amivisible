@@ -83,10 +83,9 @@ html, body { overflow-x: clip; }
 }
 .scene-robot-wrap {
   position: absolute;
-  /* variant A: near the original ridge spot, 0.85× — sunk so his boots stand
-     IN the fringe (owner: he floated on the silhouette edge otherwise) */
+  /* variant A: near the original ridge spot, 0.85× — feet y782 behind the crest */
   left: 11.9vw;
-  top: 29.37vw;
+  top: 27.17vw;
   width: 19.04vw;
   will-change: transform;
   transform-origin: 50% 74%; /* pivot at the hips — he leans, feet stay planted */
