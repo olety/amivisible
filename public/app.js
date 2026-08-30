@@ -465,7 +465,7 @@ bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
   const tick = (now) => {
     if (want.row !== cur.row) {
       if (pendRow !== want.row) { pendRow = want.row; pendSince = now; }
-      else if (now - pendSince > 200) {
+      else if (now - pendSince > 150) {
         const from = cur.row, p = cur.pos;
         cur.row = want.row;
         cur.pos = cur.row === "level"
@@ -474,7 +474,7 @@ bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
         pendRow = null;
       }
     } else pendRow = null;
-    if (want.row === cur.row) cur.pos += (want.pos - cur.pos) * 0.25;
+    if (want.row === cur.row) cur.pos += (want.pos - cur.pos) * 0.42;
     paint();
     requestAnimationFrame(tick);
   };
@@ -503,9 +503,13 @@ bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
     if (onHim) {
       want = { row: "level", pos: C };
     } else if (v < -0.30 && Math.abs(v) > Math.abs(h) * 0.8) {
-      want = { row: "sky", pos: h < -0.5 ? 0 : h < 0 ? 1 : h < 0.5 ? 2 : 3 };
+      // side from left/right, depth from the sight-line: the more directly
+      // overhead the cursor is, the higher he cranes (deep > 45 degrees)
+      const deep = Math.atan2(-dy, Math.abs(dx)) > 0.785;
+      want = { row: "sky", pos: h < 0 ? (deep ? 0 : 1) : (deep ? 3 : 2) };
     } else if (v > 0.36 && v > Math.abs(h) * 0.8) {
-      want = { row: "flower", pos: h < -0.5 ? 0 : h < 0 ? 1 : h < 0.5 ? 2 : 3 };
+      const deep = Math.atan2(dy, Math.abs(dx)) > 0.873; // > 50 degrees
+      want = { row: "flower", pos: h < 0 ? (deep ? 0 : 1) : (deep ? 3 : 2) };
     } else {
       let p = (h + 1) * 4;
       if (Math.round(p) === C) p = p < C ? C - 1 : C + 1;
