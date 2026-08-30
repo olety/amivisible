@@ -2,11 +2,10 @@
 
 const $ = (id) => document.getElementById(id);
 
-const TIER_LABELS = {
-  citation: "citation path — these get you cited in AI answers",
+const TIER_NAMES = {
+  citation: "citation path — gets you cited in AI answers",
   index: "search index",
-  secondary: "secondary assistants",
-  training: "training-only — blocking these does NOT hurt your visibility",
+  secondary: "secondary assistant",
 };
 
 // mirrors the server's probe sequence (src/report.ts) — shown while the real probes run
@@ -160,38 +159,66 @@ function render(data) {
   document.querySelector(".verdict").classList.toggle(
     "all-clear", data.headline.visible === data.headline.total);
 
-  // crawler chips by tier
+  // crawler passport stamps — click one for its story
   const groups = $("crawler-groups");
   groups.innerHTML = "";
-  const byTier = {};
+  const field = el("div", "stamps");
+  const detail = el("div", "stamp-detail");
+  detail.hidden = true;
+  let active = null;
   for (const c of data.crawlers) {
-    const key = c.trainingOnly ? "training" : c.tier;
-    (byTier[key] ||= []).push(c);
-  }
-  for (const tier of ["citation", "index", "secondary", "training"]) {
-    if (!byTier[tier]) continue;
-    const g = el("div", "tier-group");
-    g.appendChild(el("div", "tier-label", TIER_LABELS[tier] || tier));
-    const chips = el("div", "chips");
-    for (const c of byTier[tier]) {
-      let cls, title;
-      if (c.robots === null && c.edge === null) { // policy tokens (no UA to probe)
-        cls = "neutral";
-        title = `${c.name}: policy token — not probeable directly`;
-      } else if (c.canRead) {
-        cls = "ok";
-        title = `${c.name} (${c.operator}): can read this page`;
-      } else {
-        cls = tier === "training" ? "neutral" : "blocked";
-        title = `${c.name} (${c.operator}): blocked by ${c.blockedBy || "unknown"}`;
+    const policy = !c.robots && !c.edge;
+    const cls = c.canRead ? "ok" : policy ? "neutral" : c.trainingOnly ? "train" : "no";
+    const mark = c.canRead ? "\u2713 " : policy ? "\u00b7 " : "\u2717 ";
+    const s = el("button", `stamp ${cls}`, mark + c.name);
+    s.type = "button";
+    s.setAttribute("aria-expanded", "false");
+    s.addEventListener("click", () => {
+      if (active === s) {
+        detail.hidden = true;
+        s.classList.remove("open");
+        s.setAttribute("aria-expanded", "false");
+        active = null;
+        return;
       }
-      const chip = el("span", `chip ${cls}`, c.name);
-      chip.title = title;
-      chips.appendChild(chip);
-    }
-    g.appendChild(chips);
-    groups.appendChild(g);
+      if (active) { active.classList.remove("open"); active.setAttribute("aria-expanded", "false"); }
+      active = s;
+      s.classList.add("open");
+      s.setAttribute("aria-expanded", "true");
+      detail.innerHTML = "";
+      const kind = c.trainingOnly ? "training-only" : (TIER_NAMES[c.tier] || c.tier);
+      detail.appendChild(el("div", "sd-head", `${c.name} \u00b7 ${c.operator} \u00b7 ${kind}`));
+      if (c.purpose) detail.appendChild(el("p", "sd-purpose", c.purpose));
+      const rows = el("div", "sd-rows");
+      const row = (k, v, good) => {
+        const r = el("div", "sd-row");
+        r.appendChild(el("span", "sd-k", k));
+        r.appendChild(el("span", "sd-v" + (good === true ? " good" : good === false ? " bad" : ""), v));
+        rows.appendChild(r);
+      };
+      if (policy) {
+        row("probe", "policy token \u2014 sends no requests of its own; it only acts through robots.txt rules", null);
+      } else {
+        const rv = c.robots?.verdict || "unknown";
+        row(
+          "robots.txt",
+          rv === "block"
+            ? "blocked" + (c.robots?.matchedAgent ? ` (rule: ${c.robots.matchedAgent})` : "")
+            : rv.replace(/-/g, " "),
+          rv !== "block"
+        );
+        if (c.edge != null) row("edge, as this crawler", c.edge === "pass" ? "server sent the page" : String(c.edge), c.edge === "pass");
+      }
+      row("verdict", c.canRead ? "can read this page" : c.blockedBy || "cannot read this page", c.canRead ? true : c.trainingOnly ? null : false);
+      detail.appendChild(rows);
+      if (!c.canRead && c.trainingOnly)
+        detail.appendChild(el("p", "sd-note", "Training-only crawler \u2014 blocking it does not cost you visibility in AI answers."));
+      detail.hidden = false;
+    });
+    field.appendChild(s);
   }
+  groups.appendChild(field);
+  groups.appendChild(detail);
 
   // findings
   const list = $("findings");
@@ -319,7 +346,7 @@ $("copy-prompt").addEventListener("click", async () => {
 
 // reduced motion: freeze the robot on his poster frame
 if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-  const rv = document.querySelector(".hero-unit video");
+  const rv = null;
   if (rv) { rv.removeAttribute("autoplay"); rv.pause(); rv.load(); }
 }
 

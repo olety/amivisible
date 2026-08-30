@@ -66,6 +66,8 @@ a { color: var(--violet); }
 
 /* ---------- postcard hero (layered: bg plate / robot / floating window) ---------- */
 
+html, body { overflow-x: clip; }
+
 .postcard {
   position: relative;
   min-height: 92vh;
@@ -104,7 +106,8 @@ a { color: var(--violet); }
 .hero-copy {
   position: absolute;
   left: 6%;
-  top: 9vh;
+  /* vw-anchored like the painting: keeps the text block above the robot's antenna (painting y~390 = 25.4vw) at every aspect ratio */
+  top: clamp(44px, 4.2vw, 88px);
   max-width: 46vw;
   z-index: 3;
 }
@@ -127,22 +130,7 @@ a { color: var(--violet); }
 }
 
 /* the robot layer — cut from the plate, breathes gently, gazes at the window */
-.hero-unit {
-  position: absolute;
-  left: -1vw;
-  bottom: 2vh;
-  width: clamp(300px, min(38vw, 52vh), 640px);
-  pointer-events: none;
-  user-select: none;
-}
-.hero-unit .unit-base { display: block; width: 100%; height: auto; }
-.hero-unit video {
-  position: absolute;
-  left: 16.61%;
-  top: -0.32%;
-  width: 66.96%;
-  clip-path: inset(0 0 8.9% 0);
-}
+
 @keyframes breathe {
   from { transform: translateY(0) rotate(0deg); }
   to { transform: translateY(-6px) rotate(-0.5deg); }
@@ -318,33 +306,57 @@ h2 {
 .verdict-sub { margin: 0; color: var(--violet-soft); font-weight: 600; }
 .verdict.all-clear .verdict-num { color: var(--orange-deep); text-shadow: 4px 4px 0 var(--violet-soft); }
 
-/* crawler chips */
-.tier-group { margin-bottom: 14px; }
-.tier-label {
-  font-weight: 700;
+/* crawler passport stamps */
+.stamps { display: flex; flex-wrap: wrap; gap: 9px; }
+.stamp {
+  font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--violet-soft);
-  margin-bottom: 6px;
-}
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip {
   font-weight: 700;
-  font-size: 14px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 2px solid var(--violet);
-  background: var(--paper);
-  color: var(--violet-deep);
-  cursor: default;
+  padding: 5px 12px;
+  border: 2.5px solid var(--violet);
+  border-radius: 6px 9px 7px 10px / 9px 6px 10px 7px;
+  color: var(--violet);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s ease;
 }
-.chip.ok { border-color: var(--violet); }
-.chip.ok::before { content: "✓ "; color: var(--violet); }
-.chip.blocked { border-color: var(--orange-deep); background: #f9e0cd; color: var(--orange-deep); }
-.chip.blocked::before { content: "✗ "; }
-.chip.neutral { border-color: var(--violet-soft); color: var(--violet-soft); background: transparent; }
-.chip.neutral::before { content: "– "; }
+.stamp.no {
+  border-color: var(--orange-deep);
+  color: var(--orange-deep);
+  background: #f9e0cd;
+  transform: rotate(-1.5deg);
+}
+.stamp.train { border-color: var(--violet-soft); color: var(--violet-soft); border-style: dashed; }
+.stamp.neutral { border-color: var(--violet-soft); color: var(--violet-soft); opacity: 0.8; }
+.stamp:hover { background: var(--orange-soft); color: var(--violet-deep); }
+.stamp.open { background: var(--violet); color: var(--paper); border-color: var(--violet); transform: none; }
+.stamp.open.no { background: var(--orange-deep); border-color: var(--orange-deep); }
+
+.stamp-detail {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 2.5px dashed var(--violet-soft);
+  border-radius: 12px 15px 13px 16px / 15px 12px 16px 13px;
+  background: var(--paper-light);
+  animation: rise-in 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.sd-head { font-weight: 800; color: var(--violet-deep); margin-bottom: 4px; }
+.sd-purpose { margin: 0 0 10px; color: var(--violet); }
+.sd-rows { display: grid; gap: 5px; }
+.sd-row { display: flex; gap: 12px; align-items: baseline; }
+.sd-k {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--violet-soft);
+  min-width: 148px;
+  text-align: right;
+}
+.sd-v { font-weight: 600; color: var(--violet-deep); }
+.sd-v.good::before { content: "\2713 "; color: var(--violet); }
+.sd-v.bad { color: var(--orange-deep); }
+.sd-v.bad::before { content: "\2717 "; }
+.sd-note { margin: 10px 0 0; font-size: 14px; color: var(--violet-soft); font-weight: 600; }
 
 /* entrances: settle curve in, sharper/shorter out */
 #report:not([hidden]) { animation: rise-in 0.26s cubic-bezier(0.23, 1, 0.32, 1); }
@@ -475,15 +487,18 @@ footer {
 footer a { color: var(--violet); }
 
 @media (max-width: 760px) {
-  body { background-image: url("/assets/scene-sm.webp"); background-size: 235% auto; background-position: 50% top; }
+  body { background-image: url("/assets/scene-sm.webp"); background-size: 235% auto; background-position: 24% top; }
   .postcard { min-height: 96vh; }
-  .topbar { padding: 14px 18px; }
-  .topbar nav a { margin-left: 12px; font-size: 14px; }
-  .hero-copy { position: static; max-width: none; padding: 3vh 22px 0; text-align: center; }
-  .sky-window { position: static; width: min(470px, 92vw); margin: 4vh auto 0; }
+  .topbar { padding: 14px 12px; }
+  .topbar nav a { margin-left: 10px; font-size: 13px; }
+  .wordmark { font-size: 20px; }
+  .hero-copy { position: static; max-width: none; padding: 3vh 20px 0; text-align: center; }
+  .tagline br { display: none; }
+  .tagline { max-width: 92vw; margin: 0 auto; }
+  .sky-window { position: static; width: min(470px, 92vw); margin: max(24px, calc(88vw - 245px)) auto 0; }
+  .api-table td { word-break: break-word; }
   .sky-window-body { flex-direction: column; }
-  .hero-unit { width: clamp(240px, 62vw, 400px); left: 0; bottom: 4vw; }
-  .hero { padding-bottom: 44vw; } /* room for the robot below the window */
+  .hero { padding-bottom: 46vw; } /* hill continues below the window */
   .paper-card { padding: 20px 18px; }
 
 }
@@ -494,5 +509,5 @@ footer a { color: var(--violet); }
   html { scroll-behavior: auto; }
   .btn-secondary, #scan-btn, #url-input, .probe-cells .cell { transition: none; }
   #report:not([hidden]), #fixkit:not([hidden]), .check-error:not([hidden]) { animation: none; }
-  .hero-unit, .sky-window { animation: none; }
+  .sky-window { animation: none; }
 }
