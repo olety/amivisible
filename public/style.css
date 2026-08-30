@@ -98,9 +98,9 @@ html, body { overflow-x: clip; }
 .scene-robot-frames {
   position: absolute;
   left: -11.42%;
-  top: -5.41%;
+  top: -5.36%;
   width: 152.45%;
-  height: 110.80%;
+  height: 110.58%;
   background-size: 500% 500%;
   background-repeat: no-repeat;
   animation: breathe 5.2s ease-in-out infinite alternate;
