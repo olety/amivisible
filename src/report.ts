@@ -348,7 +348,7 @@ function buildFindings(
       id: "llms-txt", severity: "info", evidence: "SPECULATIVE",
       title: "No llms.txt — one static file would greet the agent web",
       detail: "No major engine documents consuming llms.txt yet (an Ahrefs study across ~5,000 domains found zero attributable citations), so this never affects your score. But coding agents and AI browsers pointed at your site do fetch it, it costs nothing to serve, and it's the friendly move. The fix kit drafts one for you.",
-      fix: "Serve /llms.txt — a short markdown index of your key pages. GET https://amivisible.dev/api/fixkit returns a draft.",
+      fix: "Serve /llms.txt — a short markdown index of your key pages (the fix kit drafts one for you).",
     });
   }
 

@@ -156,7 +156,7 @@ function renderStage(data) {
 
   // problems first, then readable, then the policy/training paperwork
   const rank = (c) => {
-    const policy = !c.robots && !c.edge;
+    const policy = c.edge === "not-probed";
     if (!c.canRead && !c.trainingOnly && !policy) return 0;
     if (c.canRead) return 1;
     return 2;
@@ -164,7 +164,7 @@ function renderStage(data) {
   const crawlers = [...data.crawlers].sort((a, b) => rank(a) - rank(b));
 
   for (const c of crawlers) {
-    const policy = !c.robots && !c.edge;
+    const policy = c.edge === "not-probed";
     const cls = c.canRead ? "ok" : policy ? "neutral" : c.trainingOnly ? "train" : "no";
     const mark = c.canRead ? "✓ " : policy ? "· " : "✗ ";
     const s = el("button", `stamp ${cls}`, mark + c.name);
@@ -204,7 +204,7 @@ function renderStage(data) {
             : rv.replace(/-/g, " "),
           rv !== "block"
         );
-        if (c.edge != null) row("edge, as this crawler", c.edge === "pass" ? "server sent the page" : String(c.edge), c.edge === "pass");
+        if (c.edge != null && c.edge !== "not-probed") row("edge, as this crawler", c.edge === "pass" ? "server sent the page" : String(c.edge), c.edge === "pass");
       }
       row("verdict", c.canRead ? "can read this page" : c.blockedBy || "cannot read this page", c.canRead ? true : c.trainingOnly ? null : false);
       detail.appendChild(rows);
@@ -244,19 +244,20 @@ function findingRow(f) {
 function buildFixPrompt(data, url) {
   const clean = (data.finalUrl || url).replace(/\/$/, "");
   const enc = encodeURIComponent(clean);
-  const probed = data.crawlers.length;
+  const probed = data.crawlers.filter((c) => c.edge && c.edge !== "not-probed").length;
+  const edgeBlockedCase = data.findings.some((f) => f.id === "edge-block");
   const cant = data.crawlers.filter((c) => !c.trainingOnly && !c.canRead).map((c) => c.name);
   const good = data.findings.filter((f) => f.severity === "good").map((f) => f.title);
   const steps = data.findings
     .filter((f) => f.severity !== "good" && f.fix)
     .map((f) => `${f.title} — ${f.fix}`);
-  steps.push(`GET https://amivisible.dev/api/fixkit?url=${enc} — it returns a ready-made robots.txt and an llms.txt draft. Apply what fits this repo.`);
+  steps.push(`GET https://amivisible.dev/api/fixkit?url=${enc} — it returns a recommended robots.txt and an llms.txt draft. Merge what's missing into the existing files; never replace a robots.txt wholesale, and skip anything already covered.`);
 
   const allClear = data.headline.visible === data.headline.total;
   const lines = [];
   lines.push(`Fix the AI visibility of ${clean}.`);
   lines.push("");
-  lines.push(`amivisible.dev checked it against ${probed} AI crawler identities — real HTTP probes, no guesses. Score: ${data.headline.visible}/${data.headline.total} citation-path crawlers can read it.`);
+  lines.push(`amivisible.dev probed it as ${probed} AI crawler user-agents (real HTTP requests, no guesses), plus the robots.txt-only policy tokens. Score: ${data.headline.visible}/${data.headline.total} citation-path crawlers can read it.`);
   if (cant.length) lines.push(`Can't read it: ${cant.join(", ")}.`);
   if (good.length) lines.push(`Already working — don't touch: ${good.join("; ")}.`);
   lines.push("");
@@ -265,13 +266,18 @@ function buildFixPrompt(data, url) {
   lines.push("");
   lines.push("Rules:");
   lines.push("- Keep any deliberate training-bot blocks (GPTBot, ClaudeBot, CCBot…) — they don't cost AI-answer visibility. Only fix the citation path.");
+  lines.push("- Live-infrastructure changes (CDN/WAF dashboards, DNS, bot settings): describe the exact change and hand it to me — never apply it yourself.");
   lines.push("- Show me the full diff before committing anything.");
   lines.push("");
-  lines.push(
-    allClear
-      ? `Verify when done: GET https://amivisible.dev/api/check?url=${enc}&fresh=1 — the score should stay ${data.headline.total}/${data.headline.total}.`
-      : `Verify when done: GET https://amivisible.dev/api/check?url=${enc}&fresh=1 — expect ${data.headline.total}/${data.headline.total}.`
-  );
+  if (edgeBlockedCase) {
+    lines.push(`Verify after the file changes are deployed: GET https://amivisible.dev/api/check?url=${enc}&fresh=1 — the robots.txt findings should clear. Edge (CDN/WAF) verdicts need a human dashboard change and can still read as blocked to our datacenter probes afterwards — if only edge blocks remain, stop and report.`);
+  } else {
+    lines.push(
+      allClear
+        ? `Verify after your changes are deployed: GET https://amivisible.dev/api/check?url=${enc}&fresh=1 — the score should stay ${data.headline.total}/${data.headline.total}.`
+        : `Verify after your changes are deployed: GET https://amivisible.dev/api/check?url=${enc}&fresh=1 — expect ${data.headline.total}/${data.headline.total}.`
+    );
+  }
   return lines.join("\n");
 }
 
@@ -303,7 +309,7 @@ function render(data) {
   const hasWork = improvables.some((f) => f.fix) || data.headline.visible < data.headline.total;
   $("fix-prompt-box").hidden = !hasWork;
   $("improve-lead").hidden = !hasWork;
-  $("improve-clear").hidden = hasWork;
+  $("improve-clear").hidden = hasWork || improvables.length > 0;
   if (hasWork) $("fix-prompt").textContent = buildFixPrompt(data, currentUrl);
   $("improve-block").hidden = !hasWork && improvables.length === 0;
 
@@ -353,12 +359,14 @@ function personalizePrompt(url) {
 
 async function loadFixkit() {
   if (!currentUrl) return;
+  const requestedFor = currentUrl;
   const box = $("fixkit");
   box.hidden = false;
   box.innerHTML = "<p class='kit-note'>building the kit…</p>";
   try {
-    const res = await fetch(`/api/fixkit?url=${encodeURIComponent(currentUrl)}`);
+    const res = await fetch(`/api/fixkit?url=${encodeURIComponent(requestedFor)}`);
     const kit = await res.json();
+    if (currentUrl !== requestedFor) return;
     if (!res.ok || kit.error) {
       box.innerHTML = "";
       box.appendChild(el("p", "kit-note", kit.detail || kit.error || "fix kit failed"));
@@ -420,6 +428,43 @@ const bindCopy = (btnId, srcId, label) => {
 };
 bindCopy("copy-prompt", "agent-prompt", "copy prompt");
 bindCopy("copy-fix", "fix-prompt", "copy fix prompt");
+
+// the scout tracks your cursor — the robot is a real layer, so he can move.
+// Gentle lerp toward the pointer; eases back to rest when it leaves.
+(() => {
+  const wrap = $("scene-robot");
+  if (!wrap) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (!matchMedia("(pointer: fine)").matches) return;
+  let tx = 0, ty = 0, tr = 0, cx = 0, cy = 0, cr = 0, raf = 0;
+  const tick = () => {
+    cx += (tx - cx) * 0.06; cy += (ty - cy) * 0.06; cr += (tr - cr) * 0.06;
+    wrap.style.transform = `translate(${cx.toFixed(2)}px, ${cy.toFixed(2)}px) rotate(${cr.toFixed(3)}deg)`;
+    if (Math.abs(tx - cx) + Math.abs(ty - cy) + Math.abs(tr - cr) > 0.05) raf = requestAnimationFrame(tick);
+    else raf = 0;
+  };
+  const aim = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  addEventListener("pointermove", (e) => {
+    const r = wrap.getBoundingClientRect();
+    if (r.bottom < 0) return; // scrolled past the hero
+    const dx = (e.clientX - (r.left + r.width / 2)) / innerWidth;
+    const dy = (e.clientY - (r.top + r.height * 0.4)) / innerHeight;
+    tx = Math.max(-1, Math.min(1, dx * 2)) * 7;
+    ty = Math.max(-1, Math.min(1, dy * 2)) * 4;
+    tr = Math.max(-1, Math.min(1, dx * 2)) * 2.4;
+    aim();
+  }, { passive: true });
+  addEventListener("pointerleave", () => { tx = ty = tr = 0; aim(); });
+})();
+
+// he perks up when you're about to type
+{
+  const wrap = $("scene-robot"), input = $("url-input");
+  if (wrap && input) {
+    input.addEventListener("focus", () => wrap.classList.add("perk"));
+    input.addEventListener("blur", () => wrap.classList.remove("perk"));
+  }
+}
 
 // shareable links: /?url=… auto-runs
 const initial = new URLSearchParams(location.search).get("url");

@@ -20,6 +20,14 @@
 </head>
 <body>
 
+<!-- real scene layers in painting-space: body bg (painting) < robot < hill < content -->
+<div class="scene" aria-hidden="true">
+  <div class="scene-robot-wrap" id="scene-robot">
+    <img class="scene-robot" src="/assets/robot.webp" alt="" draggable="false">
+  </div>
+  <img class="scene-hill" src="/assets/hill.webp" alt="" draggable="false">
+</div>
+
 <div class="postcard">
   <header class="topbar">
     <a class="wordmark" href="/">amivisible</a>

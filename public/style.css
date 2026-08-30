@@ -68,6 +68,46 @@ a { color: var(--violet); }
 
 html, body { overflow-x: clip; }
 
+/* ---------- scene layers ----------
+   The painting is the body background (100% wide ⇒ 1 painting px = 100/1536 vw).
+   The robot and the front hill are separate imgs positioned in that same
+   painting-space, so they can move independently: robot sits between the
+   body bg and the hill, feet tucked behind the painted ridge grass. */
+.scene {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 194.53vw; /* 2988/1536 — full painting height */
+  pointer-events: none;
+  z-index: 1;
+}
+.scene-robot-wrap {
+  position: absolute;
+  /* variant A: near the original ridge spot, 0.85× — feet y782 behind the crest */
+  left: 11.9vw;
+  top: 27.17vw;
+  width: 19.04vw;
+  will-change: transform;
+  transition: margin-top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* he notices when you're about to type */
+.scene-robot-wrap.perk { margin-top: -12px; }
+.scene-robot {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform-origin: 50% 92%;
+  animation: breathe 5.2s ease-in-out infinite alternate;
+}
+.scene-hill {
+  position: absolute;
+  left: 0;
+  top: 36.458vw;  /* painting y560 */
+  width: 65.104vw; /* painting x0-1000 */
+  height: auto;
+}
+.postcard, .meadow { z-index: 2; }
+
 .postcard {
   position: relative;
   min-height: 92vh;
@@ -512,6 +552,11 @@ footer a { color: var(--violet); }
 
 @media (max-width: 820px) {
   body { background-image: url("/assets/scene-sm.webp"); background-size: 235% auto; background-position: 4% top; }
+  /* painting-space at 235%: 1 painting px = 235/1536 vw, shifted 5.4vw left (4% of the 135vw excess) */
+  .scene { height: 457.15vw; }
+  /* peek around the card's left shoulder, not dead behind it */
+  .scene-robot-wrap { left: 15vw; top: 60.5vw; width: 44.74vw; transform: rotate(-4.5deg); }
+  .scene-hill { left: -5.4vw; top: 85.68vw; width: 152.99vw; }
   .postcard { min-height: 96vh; }
   .topbar { padding: 14px 12px; }
   .topbar nav a { margin-left: 10px; font-size: 13px; }
@@ -542,4 +587,6 @@ footer a { color: var(--violet); }
   .btn-secondary, #scan-btn, #url-input, .stamp { transition: none; }
   #report:not([hidden]), #fixkit:not([hidden]), .check-error:not([hidden]) { animation: none; }
   .sky-window { animation: none; }
+  .scene-robot { animation: none; }
+  .scene-robot-wrap { transition: none; }
 }
