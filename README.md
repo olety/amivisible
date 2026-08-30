@@ -6,6 +6,10 @@ Paste a URL. Find out which AI crawlers and agents can actually read it — and 
 
 No accounts. No tracking. No LLM at runtime — every check is a real HTTP probe.
 
+**Live: [amivisible.dev](https://amivisible.dev)**
+
+![amivisible — riso sunset scout](public/assets/og.jpg)
+
 Built solo for [Hackyard Yard #1](https://hackyard.tech/) ("No accounts", 48h).
 
 ## What it checks
@@ -26,6 +30,10 @@ curl "https://amivisible.dev/api/fixkit?url=yoursite.com"
 
 Reports are versioned JSON — diff two runs to see what a deploy changed.
 Append `&fresh=1` to bypass the 1-hour cache after you ship a fix.
+Fair-use limit: 20 API calls per minute per visitor.
+
+Prefer prose? The site ships a copy-paste prompt for Claude Code / Codex / opencode:
+your agent checks the site, fetches the fix kit, and applies the fixes in your repo.
 
 ## MCP — let your agent re-check your site after every deploy
 
